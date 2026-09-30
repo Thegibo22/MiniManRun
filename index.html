@@ -1,0 +1,2606 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Super Mini Gifo & Baffo Bros - Chuck Taylor Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --sky-blue: #5c94fc;
+            --ground-brick: #c84c0c;
+            --gold-coin: #fcc419;
+            --arcade-red: #e52521;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        body {
+            font-family: 'Press Start 2P', monospace;
+            background: radial-gradient(circle at center, #1e1b4b 0%, #090a0f 100%);
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            touch-action: manipulation;
+        }
+
+        /* Crisp pixel art rendering */
+        canvas {
+            image-rendering: -moz-crisp-edges;
+            image-rendering: -webkit-crisp-edges;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+            display: block;
+        }
+
+        #gameCanvas {
+            width: 100%;
+            height: auto;
+            aspect-ratio: 16 / 9;
+            background-color: #5c94fc;
+            cursor: pointer;
+            touch-action: none;
+        }
+
+        /* Retro CRT scanlines overlay */
+        .crt-overlay {
+            background: linear-gradient(
+                rgba(18, 16, 16, 0) 50%, 
+                rgba(0, 0, 0, 0.16) 50%
+            );
+            background-size: 100% 4px;
+            pointer-events: none;
+        }
+
+        /* Arcade 3D Pixel Button */
+        .arcade-btn {
+            font-family: 'Press Start 2P', monospace;
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 4px solid #000;
+            box-shadow: 
+                inset -4px -4px 0px 0px rgba(0,0,0,0.35),
+                inset 4px 4px 0px 0px rgba(255,255,255,0.4),
+                0 6px 0 #000;
+            transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.1s ease;
+            touch-action: manipulation;
+        }
+
+        .arcade-btn:hover {
+            filter: brightness(1.08);
+        }
+
+        .arcade-btn:active, .arcade-btn.pressed {
+            transform: translateY(4px);
+            box-shadow: 
+                inset -4px -4px 0px 0px rgba(0,0,0,0.35),
+                inset 4px 4px 0px 0px rgba(255,255,255,0.4),
+                0 2px 0 #000;
+        }
+
+        .pixel-box {
+            border: 4px solid #000000;
+            box-shadow: 
+                inset -4px -4px 0px 0px rgba(0,0,0,0.3),
+                inset 4px 4px 0px 0px rgba(255,255,255,0.25),
+                8px 8px 0px 0px rgba(0,0,0,0.65);
+        }
+
+        .skin-card {
+            border: 3px solid #334155;
+            transition: all 0.12s ease;
+            cursor: pointer;
+        }
+
+        .skin-card.active {
+            border-color: #facc15;
+            background-color: rgba(30, 41, 59, 0.95);
+            box-shadow: 0 0 0 3px #000, 0 0 16px rgba(250, 204, 21, 0.55);
+            transform: translateY(-2px);
+        }
+
+        .diff-pill {
+            font-family: 'Press Start 2P', monospace;
+            border: 3px solid #1e293b;
+            background-color: #0f172a;
+            color: #94a3b8;
+            transition: all 0.12s ease;
+            cursor: pointer;
+        }
+
+        .diff-pill.active {
+            border-color: #facc15;
+            background-color: #ca8a04;
+            color: #000000;
+            box-shadow: 0 0 0 2px #000, 0 0 12px rgba(250, 204, 21, 0.55);
+            transform: translateY(-1px);
+        }
+
+        @keyframes floatPulse {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .animate-float {
+            animation: floatPulse 1.8s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-2 sm:p-4">
+
+    <!-- Main Arcade Wrapper -->
+    <div class="w-full max-w-5xl flex flex-col items-center">
+        
+        <!-- Top Marquee Header -->
+        <header class="w-full bg-gradient-to-r from-indigo-900 via-red-700 to-amber-500 pixel-box rounded-t-xl px-3 py-2.5 sm:px-5 sm:py-3 mb-2 flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 sm:w-10 sm:h-10 bg-yellow-400 border-2 border-black rounded flex items-center justify-center text-black font-bold text-sm sm:text-lg shadow">
+                    ?
+                </div>
+                <div>
+                    <h1 class="text-[10px] sm:text-sm md:text-base text-white drop-shadow-[2px_2px_0_#000] tracking-wider">
+                        SUPER MINI GIFO & BAFFO
+                    </h1>
+                    <p class="text-[7px] sm:text-[9px] text-yellow-200 drop-shadow-[1px_1px_0_#000]">
+                        MATTONI FISICI • GOOMBA SCHIACCIABILI • CONVERSE & ADIDAS CAMPUS!
+                    </p>
+                </div>
+            </div>
+
+            <!-- Skin, Difficulty, Mobile Mode, Shoe Skin & Audio Controls -->
+            <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                <button id="skinToggleBtn" title="Cambia personaggio giocabile" class="arcade-btn bg-sky-600 text-white text-[7px] sm:text-[9px] px-2 py-1.5 sm:px-2.5 sm:py-2 rounded">
+                    <i class="fa-solid fa-glasses mr-1 text-yellow-300"></i>
+                    <span id="skinBtnLabel">SKIN: MINI GIFO</span>
+                </button>
+                <button id="difficultyTopBtn" title="Cambia Difficoltà e Velocità Iniziale" class="arcade-btn bg-amber-500 text-black text-[7px] sm:text-[9px] px-2 py-1.5 sm:px-2.5 sm:py-2 rounded">
+                    <i class="fa-solid fa-gauge-high mr-1"></i>
+                    <span id="difficultyTopLabel">DIFF: LENTA</span>
+                </button>
+                <button id="mobileModeBtn" title="Attiva/Disattiva Controlli Touch Mobile" class="arcade-btn bg-emerald-600 text-white text-[7px] sm:text-[9px] px-2 py-1.5 sm:px-2.5 sm:py-2 rounded">
+                    <i class="fa-solid fa-mobile-screen-button mr-1 text-yellow-200"></i>
+                    <span id="mobileModeLabel">MOBILE: OFF</span>
+                </button>
+                <button id="shoeColorBtn" title="Cambia scarpa gigante (Adidas Campus Grigia, Converse Nera, Converse Rossa)" class="arcade-btn bg-zinc-800 text-white text-[7px] sm:text-[9px] px-2 py-1.5 sm:px-2.5 sm:py-2 rounded">
+                    <i class="fa-solid fa-shoe-prints mr-1 text-pink-300"></i>
+                    <span id="shoeColorLabel">SCARPA: CAMPUS GRIGIA</span>
+                </button>
+                <button id="muteBtn" title="Attiva/Disattiva Audio 8-Bit" class="arcade-btn bg-amber-400 text-black text-xs sm:text-sm px-2.5 py-1.5 sm:py-2 rounded">
+                    <i id="muteIcon" class="fa-solid fa-volume-high"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- HUD Bar -->
+        <div id="hudContainer" class="w-full bg-slate-900 border-4 border-black rounded-lg px-2 py-2 sm:px-5 sm:py-2.5 mb-2 grid grid-cols-5 gap-1 sm:gap-2 text-center shadow-lg">
+            <div class="flex flex-col items-center">
+                <span class="text-[7px] sm:text-[9px] text-red-400 mb-1">PUNTI</span>
+                <span id="hudScore" class="text-[10px] sm:text-sm md:text-base text-white">000000</span>
+            </div>
+            <div class="flex flex-col items-center">
+                <span class="text-[7px] sm:text-[9px] text-yellow-400 mb-1">MONETE</span>
+                <div class="flex items-center gap-1">
+                    <span class="inline-block w-2 h-3 bg-yellow-400 border border-black rounded-sm animate-pulse"></span>
+                    <span class="text-[10px] sm:text-sm md:text-base text-yellow-300">x<span id="hudCoins">00</span></span>
+                </div>
+            </div>
+            <div class="flex flex-col items-center">
+                <span class="text-[7px] sm:text-[9px] text-orange-400 mb-1">GOOMBA</span>
+                <span class="text-[10px] sm:text-sm md:text-base text-orange-300">🥾<span id="hudGoombas">00</span></span>
+            </div>
+            <div class="flex flex-col items-center">
+                <span class="text-[7px] sm:text-[9px] text-emerald-400 mb-1">VELOCITÀ</span>
+                <span id="hudSpeed" class="text-[10px] sm:text-sm md:text-base text-emerald-300">1.0x</span>
+            </div>
+            <div class="flex flex-col items-center">
+                <span class="text-[7px] sm:text-[9px] text-amber-300 mb-1">RECORD</span>
+                <span id="hudHighScore" class="text-[10px] sm:text-sm md:text-base text-amber-200">000000</span>
+            </div>
+        </div>
+
+        <!-- Game Screen Container -->
+        <div class="relative w-full pixel-box rounded-xl overflow-hidden bg-[#5c94fc]">
+            <!-- Main Pixel Art Canvas (Logical 800x450) -->
+            <canvas id="gameCanvas" width="800" height="450"></canvas>
+
+            <!-- Subtle CRT Scanline Effect -->
+            <div class="crt-overlay absolute inset-0"></div>
+
+            <!-- START OVERLAY -->
+            <div id="startOverlay" class="absolute inset-0 bg-black/70 backdrop-blur-[2px] flex flex-col items-center justify-center p-2.5 sm:p-5 text-center z-20 overflow-y-auto">
+                <div class="bg-slate-900/95 pixel-box rounded-xl p-3 sm:p-5 max-w-xl w-full border-4 border-yellow-400">
+                    <div class="flex flex-wrap items-center justify-center gap-2 mb-2">
+                        <span class="bg-emerald-600 text-white text-[7px] sm:text-[9px] px-2 py-1 rounded border-2 border-black">
+                            MATTONI FISICI & GOOMBA (+200 PT)
+                        </span>
+                        <span class="bg-pink-600 text-white text-[7px] sm:text-[9px] px-2 py-1 rounded border-2 border-black">
+                            ADIDAS CAMPUS GRIGIA & CONVERSE
+                        </span>
+                    </div>
+
+                    <h2 class="text-xs sm:text-lg text-yellow-400 drop-shadow-[3px_3px_0_#000] mb-2 leading-snug">
+                        SCEGLI IL TUO EROE PIXEL!
+                    </h2>
+
+                    <!-- Character Skin Selection Cards -->
+                    <div class="grid grid-cols-2 gap-2.5 sm:gap-4 mb-3">
+                        <!-- Mini Gifo Card -->
+                        <div id="cardMiniGifo" class="skin-card active rounded-lg p-2 bg-slate-800/90 flex flex-col items-center">
+                            <div class="flex items-center gap-1.5 mb-1">
+                                <span class="bg-emerald-500 text-black text-[7px] sm:text-[8px] px-1.5 py-0.5 rounded font-bold">NUOVA SKIN</span>
+                            </div>
+                            <canvas id="previewMiniGifo" width="56" height="58" class="mb-1"></canvas>
+                            <div class="text-[9px] sm:text-xs text-yellow-300 font-bold mb-0.5">MINI GIFO</div>
+                            <p class="text-[7px] sm:text-[8px] text-slate-300 leading-tight">
+                                Occhiali verde oliva, t-shirt blu camo & cintura d'auto!
+                            </p>
+                        </div>
+
+                        <!-- Super Baffo Card -->
+                        <div id="cardSuperBaffo" class="skin-card rounded-lg p-2 bg-slate-800/70 flex flex-col items-center">
+                            <div class="flex items-center gap-1.5 mb-1">
+                                <span class="bg-red-500 text-white text-[7px] sm:text-[8px] px-1.5 py-0.5 rounded font-bold">CLASSICO</span>
+                            </div>
+                            <canvas id="previewSuperBaffo" width="56" height="58" class="mb-1"></canvas>
+                            <div class="text-[9px] sm:text-xs text-white font-bold mb-0.5">SUPER BAFFO</div>
+                            <p class="text-[7px] sm:text-[8px] text-slate-300 leading-tight">
+                                Cappello rosso, baffoni a manubrio e salopette blu!
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Difficulty Selector Pills -->
+                    <div class="bg-slate-800/90 border-2 border-slate-600 rounded-lg p-2 mb-3">
+                        <div class="text-[7px] sm:text-[9px] text-amber-300 mb-1.5">
+                            SELEZIONA DIFFICOLTÀ (VELOCITÀ INIZIALE):
+                        </div>
+                        <div class="grid grid-cols-4 gap-1.5" id="startDifficultyPills">
+                            <button type="button" data-diff="0" class="diff-pill active py-1.5 px-1 rounded text-[7px] sm:text-[8px]">
+                                LENTA<br><span class="text-[6px] opacity-80">1.0x</span>
+                            </button>
+                            <button type="button" data-diff="1" class="diff-pill py-1.5 px-1 rounded text-[7px] sm:text-[8px]">
+                                NORMALE<br><span class="text-[6px] opacity-80">1.6x</span>
+                            </button>
+                            <button type="button" data-diff="2" class="diff-pill py-1.5 px-1 rounded text-[7px] sm:text-[8px]">
+                                VELOCE<br><span class="text-[6px] opacity-80">2.2x</span>
+                            </button>
+                            <button type="button" data-diff="3" class="diff-pill py-1.5 px-1 rounded text-[7px] sm:text-[8px]">
+                                TURBO<br><span class="text-[6px] opacity-80">3.0x</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <p class="text-[7px] sm:text-[9px] text-slate-200 leading-relaxed mb-3">
+                        Salta <span class="text-amber-300">sopra i mattoni sospesi</span> o colpiscili da sotto (<span class="text-yellow-300">blocco ? = +100 PT</span>) e schiaccia i <span class="text-emerald-300">Goomba</span>! Se urti un ostacolo, una gigantesca <span class="text-pink-300">Adidas Campus Grigia da donna</span> o <span class="text-red-400">Converse</span> scenderà dal cielo!
+                    </p>
+
+                    <button id="startBtn" class="arcade-btn bg-emerald-500 hover:bg-emerald-400 text-black text-[10px] sm:text-sm px-6 py-2.5 sm:py-3 rounded-lg w-full sm:w-auto animate-float">
+                        <i class="fa-solid fa-play mr-2"></i> INIZIA PARTITA
+                    </button>
+                </div>
+            </div>
+
+            <!-- GAME OVER OVERLAY (Appears after the Giant Converse Stomp) -->
+            <div id="gameOverOverlay" class="hidden absolute inset-0 bg-black/60 backdrop-blur-[1px] flex flex-col items-center justify-center p-3 sm:p-4 text-center z-20 overflow-y-auto">
+                <div class="bg-slate-900/95 pixel-box rounded-xl p-3.5 sm:p-5 max-w-md w-full border-4 border-red-500">
+                    <div id="newRecordBadge" class="hidden bg-yellow-400 text-black text-[8px] sm:text-[10px] px-3 py-1 rounded border-2 border-black mb-2 inline-block animate-bounce">
+                        ★ NUOVO RECORD ASSOLUTO! ★
+                    </div>
+
+                    <h2 class="text-sm sm:text-xl text-red-500 drop-shadow-[3px_3px_0_#000] mb-3">
+                        SPIACCICATO!
+                    </h2>
+
+                    <div class="bg-slate-800 border-2 border-black rounded-lg p-2.5 sm:p-3 mb-3 space-y-1.5 text-[8px] sm:text-[10px]">
+                        <div class="flex justify-between items-center border-b border-slate-700 pb-1">
+                            <span class="text-slate-400">PUNTEGGIO FINALE:</span>
+                            <span id="finalScore" class="text-white font-bold">0</span>
+                        </div>
+                        <div class="flex justify-between items-center border-b border-slate-700 pb-1">
+                            <span class="text-slate-400">MONETE RACCOLTE:</span>
+                            <span id="finalCoins" class="text-yellow-400 font-bold">0</span>
+                        </div>
+                        <div class="flex justify-between items-center border-b border-slate-700 pb-1">
+                            <span class="text-slate-400">GOOMBA SCHIACCIATI:</span>
+                            <span id="finalGoombas" class="text-orange-400 font-bold">0</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-slate-400">MIGLIOR RECORD:</span>
+                            <span id="finalHighScore" class="text-amber-300 font-bold">0</span>
+                        </div>
+                    </div>
+
+                    <!-- Difficulty Selector inside Game Over Modal -->
+                    <div class="bg-slate-800/90 border-2 border-slate-700 rounded-lg p-2 mb-3">
+                        <div class="text-[7px] sm:text-[8px] text-amber-300 mb-1.5">
+                            CAMBIA DIFFICOLTÀ PER LA PROSSIMA CORSA:
+                        </div>
+                        <div class="grid grid-cols-4 gap-1" id="gameOverDifficultyPills">
+                            <button type="button" data-diff="0" class="diff-pill active py-1 px-1 rounded text-[7px]">
+                                LENTA
+                            </button>
+                            <button type="button" data-diff="1" class="diff-pill py-1 px-1 rounded text-[7px]">
+                                NORMALE
+                            </button>
+                            <button type="button" data-diff="2" class="diff-pill py-1 px-1 rounded text-[7px]">
+                                VELOCE
+                            </button>
+                            <button type="button" data-diff="3" class="diff-pill py-1 px-1 rounded text-[7px]">
+                                TURBO
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row gap-2">
+                        <button id="restartBtn" class="arcade-btn bg-red-500 hover:bg-red-400 text-white text-[10px] sm:text-xs px-5 py-3 rounded-lg flex-1">
+                            <i class="fa-solid fa-rotate-right mr-2"></i> GIOCA ANCORA
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MOBILE MODE ERGONOMIC TOUCH DECK (Shown when Mobile Mode is ON) -->
+        <div id="mobileTouchDeck" class="hidden w-full mt-2.5 bg-slate-900/95 border-4 border-black rounded-xl p-2.5 sm:p-3 shadow-xl">
+            <div class="flex items-center justify-between text-[7px] sm:text-[8px] text-amber-300 mb-2 px-1">
+                <span><i class="fa-solid fa-gamepad mr-1"></i> CONTROLLI TOUCH MOBILE ATTIVI</span>
+                <span class="text-emerald-300">TOCCA PER SALTARE / DOPPIO SALTO</span>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <button id="mobileLeftJumpBtn" class="arcade-btn bg-indigo-600 active:bg-indigo-700 text-white text-[10px] sm:text-xs py-4 sm:py-5 rounded-xl flex flex-col items-center justify-center gap-1">
+                    <i class="fa-solid fa-angles-up text-base sm:text-lg text-yellow-300"></i>
+                    <span>SALTO RAPIDO (SX)</span>
+                </button>
+                <button id="mobileRightJumpBtn" class="arcade-btn bg-red-600 active:bg-red-700 text-white text-[10px] sm:text-xs py-4 sm:py-5 rounded-xl flex flex-col items-center justify-center gap-1">
+                    <i class="fa-solid fa-arrow-up text-base sm:text-lg text-yellow-300"></i>
+                    <span>SALTA / DOPPIO (DX)</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- External Desktop Arcade Controls Bar -->
+        <div id="desktopControlsBar" class="w-full mt-3 flex flex-wrap items-center justify-between gap-3 bg-slate-900/90 border-4 border-black rounded-xl p-3 shadow-lg">
+            <div class="flex items-center gap-3">
+                <button id="jumpBtnExternal" class="arcade-btn bg-red-600 active:bg-red-700 text-white text-[10px] sm:text-xs px-5 py-3 rounded-lg">
+                    <i class="fa-solid fa-arrow-up mr-2"></i> SALTA (SPAZIO)
+                </button>
+                <div class="hidden md:flex flex-col text-[8px] sm:text-[9px] text-slate-300 space-y-1">
+                    <span>• Salta <strong class="text-orange-300">in testa ai Goomba</strong> per schiacciarli (<strong class="text-yellow-300">+200 STOMP!</strong>).</span>
+                    <span>• Usa il <strong class="text-amber-300">SELETTORE DIFFICOLTÀ</strong> per aumentare la velocità iniziale.</span>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-1.5 text-[8px] sm:text-[9px] text-slate-300">
+                <span class="bg-slate-800 border border-slate-700 px-2 py-1.5 rounded">
+                    STOMP GOOMBA = <strong class="text-orange-400">+200 PT</strong>
+                </span>
+                <span class="bg-slate-800 border border-slate-700 px-2 py-1.5 rounded">
+                    MONETA = <strong class="text-yellow-400">+100 PT</strong>
+                </span>
+                <span class="bg-slate-800 border border-slate-700 px-2 py-1.5 rounded hidden sm:inline-block">
+                    SALTO OSTACOLO = <strong class="text-emerald-400">+50 PT</strong>
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * RETRO 8-BIT WEB AUDIO SYNTHESIZER
+         * Generates Mario-inspired coin chimes, jumps, Goomba stomp squish/bounce,
+         * descending whistle, and Giant Converse Chuck Taylor thud!
+         */
+        class RetroAudio {
+            constructor() {
+                this.ctx = null;
+                this.muted = false;
+                this.whistleOsc = null;
+                this.whistleGain = null;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    if (AudioCtx) {
+                        this.ctx = new AudioCtx();
+                    }
+                }
+                if (this.ctx && this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+
+            toggleMute() {
+                this.muted = !this.muted;
+                if (this.muted) {
+                    this.stopWhistle();
+                }
+                return this.muted;
+            }
+
+            playJump(isDouble = false) {
+                if (this.muted) return;
+                this.init();
+                if (!this.ctx) return;
+
+                try {
+                    const now = this.ctx.currentTime;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+
+                    osc.type = 'square';
+                    const startFreq = isDouble ? 280 : 180;
+                    const endFreq = isDouble ? 720 : 540;
+
+                    osc.frequency.setValueAtTime(startFreq, now);
+                    osc.frequency.exponentialRampToValueAtTime(endFreq, now + 0.16);
+
+                    gain.gain.setValueAtTime(0.13, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.17);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+
+                    osc.start(now);
+                    osc.stop(now + 0.17);
+                } catch (e) {}
+            }
+
+            playStompSound() {
+                if (this.muted) return;
+                this.init();
+                if (!this.ctx) return;
+
+                try {
+                    const now = this.ctx.currentTime;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(200, now);
+                    osc.frequency.exponentialRampToValueAtTime(95, now + 0.045);
+                    osc.frequency.setValueAtTime(330, now + 0.05);
+                    osc.frequency.exponentialRampToValueAtTime(790, now + 0.18);
+
+                    gain.gain.setValueAtTime(0.18, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.19);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+
+                    osc.start(now);
+                    osc.stop(now + 0.2);
+                } catch (e) {}
+            }
+
+            playCoin() {
+                if (this.muted) return;
+                this.init();
+                if (!this.ctx) return;
+
+                try {
+                    const now = this.ctx.currentTime;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(987.77, now); // B5
+                    osc.frequency.setValueAtTime(1318.51, now + 0.075); // E6
+
+                    gain.gain.setValueAtTime(0.14, now);
+                    gain.gain.setValueAtTime(0.14, now + 0.08);
+                    gain.gain.exponentialRampToValueAtTime(0.008, now + 0.35);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+
+                    osc.start(now);
+                    osc.stop(now + 0.36);
+                } catch (e) {}
+            }
+
+            playBlockBump() {
+                if (this.muted) return;
+                this.init();
+                if (!this.ctx) return;
+
+                try {
+                    const now = this.ctx.currentTime;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(165, now);
+                    osc.frequency.exponentialRampToValueAtTime(68, now + 0.09);
+
+                    gain.gain.setValueAtTime(0.24, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.095);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+
+                    osc.start(now);
+                    osc.stop(now + 0.1);
+                } catch (e) {}
+            }
+
+            playCollisionShock() {
+                if (this.muted) return;
+                this.init();
+                if (!this.ctx) return;
+
+                try {
+                    const now = this.ctx.currentTime;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(230, now);
+                    osc.frequency.linearRampToValueAtTime(90, now + 0.18);
+
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.19);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+
+                    osc.start(now);
+                    osc.stop(now + 0.2);
+                } catch (e) {}
+            }
+
+            startDescendingWhistle(duration = 0.45) {
+                if (this.muted) return;
+                this.init();
+                if (!this.ctx) return;
+
+                try {
+                    this.stopWhistle();
+                    const now = this.ctx.currentTime;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(1550, now);
+                    osc.frequency.exponentialRampToValueAtTime(150, now + duration);
+
+                    gain.gain.setValueAtTime(0.02, now);
+                    gain.gain.linearRampToValueAtTime(0.22, now + duration * 0.6);
+                    gain.gain.linearRampToValueAtTime(0.02, now + duration);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+
+                    osc.start(now);
+                    osc.stop(now + duration);
+                    this.whistleOsc = osc;
+                    this.whistleGain = gain;
+                } catch (e) {}
+            }
+
+            stopWhistle() {
+                if (this.whistleOsc) {
+                    try {
+                        this.whistleOsc.stop();
+                    } catch (e) {}
+                    this.whistleOsc = null;
+                }
+            }
+
+            playGiantConverseStomp() {
+                if (this.muted) return;
+                this.init();
+                if (!this.ctx) return;
+
+                try {
+                    const now = this.ctx.currentTime;
+
+                    // 1. Sub-bass heavy shoe thud
+                    const osc = this.ctx.createOscillator();
+                    const oscGain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(130, now);
+                    osc.frequency.exponentialRampToValueAtTime(28, now + 0.45);
+
+                    oscGain.gain.setValueAtTime(0.45, now);
+                    oscGain.gain.exponentialRampToValueAtTime(0.01, now + 0.46);
+
+                    osc.connect(oscGain);
+                    oscGain.connect(this.ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.47);
+
+                    // 2. Crunch noise burst
+                    this.playImpactNoise(now, 0.35, 850, 120);
+                    this.playSadRetroHorn(now + 0.35);
+                } catch (e) {}
+            }
+
+            playGiantHandSlap() {
+                if (this.muted) return;
+                this.init();
+                if (!this.ctx) return;
+
+                try {
+                    const now = this.ctx.currentTime;
+
+                    // 1. High-velocity whip crack / slap snap!
+                    const slapOsc = this.ctx.createOscillator();
+                    const slapGain = this.ctx.createGain();
+                    slapOsc.type = 'sawtooth';
+                    slapOsc.frequency.setValueAtTime(620, now);
+                    slapOsc.frequency.exponentialRampToValueAtTime(55, now + 0.24);
+
+                    slapGain.gain.setValueAtTime(0.38, now);
+                    slapGain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+
+                    slapOsc.connect(slapGain);
+                    slapGain.connect(this.ctx.destination);
+                    slapOsc.start(now);
+                    slapOsc.stop(now + 0.26);
+
+                    // 2. Crisp bright palm smack noise
+                    this.playImpactNoise(now, 0.28, 2200, 280);
+                    this.playSadRetroHorn(now + 0.32);
+                } catch (e) {}
+            }
+
+            playImpactNoise(now, duration, startFreq, endFreq) {
+                const bufferSize = Math.floor(this.ctx.sampleRate * duration);
+                const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const output = noiseBuffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    output[i] = Math.random() * 2 - 1;
+                }
+
+                const whiteNoise = this.ctx.createBufferSource();
+                whiteNoise.buffer = noiseBuffer;
+
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(startFreq, now);
+                filter.frequency.linearRampToValueAtTime(endFreq, now + duration);
+
+                const noiseGain = this.ctx.createGain();
+                noiseGain.gain.setValueAtTime(0.36, now);
+                noiseGain.gain.exponentialRampToValueAtTime(0.01, now + duration);
+
+                whiteNoise.connect(filter);
+                filter.connect(noiseGain);
+                noiseGain.connect(this.ctx.destination);
+
+                whiteNoise.start(now);
+                whiteNoise.stop(now + duration);
+            }
+
+            playSadRetroHorn(startTime) {
+                const notes = [392.00, 369.99, 349.23, 329.63]; // G4, F#4, F4, E4
+                notes.forEach((freq, idx) => {
+                    const nOsc = this.ctx.createOscillator();
+                    const nGain = this.ctx.createGain();
+                    nOsc.type = 'square';
+                    const startT = startTime + idx * 0.14;
+                    const dur = idx === notes.length - 1 ? 0.4 : 0.12;
+
+                    nOsc.frequency.setValueAtTime(freq, startT);
+                    if (idx === notes.length - 1) {
+                        nOsc.frequency.linearRampToValueAtTime(freq * 0.92, startT + dur);
+                    }
+
+                    nGain.gain.setValueAtTime(0.11, startT);
+                    nGain.gain.exponentialRampToValueAtTime(0.008, startT + dur);
+
+                    nOsc.connect(nGain);
+                    nGain.connect(this.ctx.destination);
+                    nOsc.start(startT);
+                    nOsc.stop(startT + dur + 0.02);
+                });
+            }
+        }
+
+        const sound = new RetroAudio();
+
+        /**
+         * PIXEL ART PALETTES & SPRITE MATRICES
+         * Includes custom colors for MINI GIFO (inspired by the photo) and SUPER BAFFO.
+         */
+        const PALETTE = {
+            // Classic Super Baffo & World colors
+            'R': '#e52521', // Mario Red
+            'D': '#991b1b', // Dark Red shadow
+            'B': '#1d4ed8', // Blue overalls
+            'L': '#3b82f6', // Light blue highlight
+            'S': '#fca5a5', // Pinkish skin
+            'F': '#fbd38d', // Warm skin tone
+            'M': '#78350f', // Brown hair / mustache / boots
+            'K': '#000000', // Black outline / eyes
+            'W': '#ffffff', // White gloves / shine
+            'Y': '#facc15', // Yellow buttons / gold
+            'O': '#ea580c', // Orange shadow
+            'G': '#22c55e', // Pipe green
+            'E': '#15803d', // Dark green
+            'T': '#a16207', // Goomba mushroom brown
+            'C': '#fef08a', // Cream stem
+
+            // MINI GIFO custom photo-accurate palette
+            'H': '#231710', // Deep dark-brown short hair & fringe
+            'h': '#3b281d', // Hair highlight
+            'P': '#f7cfb6', // Fair warm skin tone
+            'p': '#e3ac8d', // Skin cheek/chin shading & lips
+            'V': '#2d3823', // Dark olive-green rectangular glasses frame
+            'v': '#4a5d3a', // Olive frame top highlight
+            'I': '#cbd5e1', // Silver metallic double-pin dots on glasses corner
+            'g': '#bae6fd', // Eyeglass lens reflection
+            'e': '#3e2314', // Expressive dark brown eyes
+            'U': '#2b4370', // Patterned dark blue t-shirt base
+            'u': '#5272b4', // Blue leaf/camo t-shirt pattern
+            'Z': '#64748b', // Iconic diagonal grey car seatbelt strap!
+            'z': '#94a3b8', // Seatbelt metallic sheen
+            'J': '#1e293b', // Dark slate jeans
+        };
+
+        // ==========================================
+        // SKIN 1: MINI GIFO (12x14 Pixel Matrices)
+        // ==========================================
+        // Features: Short dark brown hair with spiky bangs, olive-green rectangular glasses
+        // with silver corner pins (I), brown eyes (e), patterned blue t-shirt (U/u) with
+        // diagonal grey car seatbelt (Z/z) across his chest!
+        const SPRITE_GIFO_RUN1 = [
+            "..HHHHHHHH..",
+            ".HHhHHHHhHH.",
+            ".HPhPPHPhPH.",
+            "IVVVVVVVVVVI",
+            ".VgWePVPgWeV",
+            ".VVVVPPVVVV.",
+            "..PPPPpPPP..",
+            "..PPPppPPP..",
+            "..uUZUUUUu..",
+            ".PPuZUUuUPP.",
+            ".PP.UuZUU...",
+            "...JJJJJJ...",
+            "..JJ....JJ..",
+            ".KKW....KKW."
+        ];
+
+        const SPRITE_GIFO_RUN2 = [
+            "..HHHHHHHH..",
+            ".HHhHHHHhHH.",
+            ".HPhPPHPhPH.",
+            "IVVVVVVVVVVI",
+            ".VgWePVPgWeV",
+            ".VVVVPPVVVV.",
+            "..PPPPpPPP..",
+            "..PPPppPPP..",
+            "..UuZUUUUu..",
+            "..PPZUUuUP..",
+            "....UuZUU...",
+            "....JJJJ....",
+            "...JJ..JJ...",
+            "..KKW..KKW.."
+        ];
+
+        const SPRITE_GIFO_JUMP = [
+            ".........PP.",
+            "..HHHHHHHPP.",
+            ".HHhHHHHhHH.",
+            ".HPhPPHPhPH.",
+            "IVVVVVVVVVVI",
+            ".VgWePVPgWeV",
+            ".VVVVPPVVVV.",
+            "..PPPPpPPP..",
+            ".PPuZUUUUu..",
+            ".PP.UuZUUu..",
+            "...JJJJJJJ..",
+            "..JJ.....JJ.",
+            ".KKW.....KKW",
+            "............"
+        ];
+
+        const SPRITE_GIFO_SHOCK = [
+            "PP.HHHHHH.PP",
+            "PP.HhHHhH.PP",
+            ".HPhPPHPhPH.",
+            "IVVVVVVVVVVI",
+            ".VWeWPVPWeWV",
+            ".VVVVPPVVVV.",
+            "..PPPKKKPP..",
+            "..PPPKWKPP..",
+            "..uUZUUUUu..",
+            "...UuZUUu...",
+            "...JJ..JJ...",
+            "..JJ....JJ..",
+            "..KKW..KKW..",
+            "............"
+        ];
+
+        // Flattened Mini Gifo pancake underneath the female hand or Converse!
+        const SPRITE_GIFO_PANCAKE = [
+            "..IVVVVPPVVVVI..",
+            ".HHVVWePPWeVVHH.",
+            "PPUuZZUUUUZZuUPP",
+            "KKKKKKKKKKKKKKKK"
+        ];
+
+        // ==========================================
+        // SKIN 2: SUPER BAFFO (12x13 Pixel Matrices)
+        // ==========================================
+        const SPRITE_BAFFO_RUN1 = [
+            "...RRRRRR...",
+            "..RRRRRRRRR.",
+            "..MMFFFKF...",
+            ".MFMFFFKKFF.",
+            ".MFMFFFFKKK.",
+            "..MMFFFFF...",
+            "...RRBRRR...",
+            "..RRRBRBYY..",
+            ".WW.BBBBBBW.",
+            ".WW.BBBBBB..",
+            "....BBBBBB..",
+            "...MMM..MMM.",
+            "..MMMM..MMMM"
+        ];
+
+        const SPRITE_BAFFO_RUN2 = [
+            "...RRRRRR...",
+            "..RRRRRRRRR.",
+            "..MMFFFKF...",
+            ".MFMFFFKKFF.",
+            ".MFMFFFFKKK.",
+            "..MMFFFFF...",
+            "..WRRBRRR...",
+            "..WRRBRBYY..",
+            "...BBBBBB...",
+            "...BBBBBB...",
+            "....BBBB....",
+            "....MMMM....",
+            "...MMMMMM..."
+        ];
+
+        const SPRITE_BAFFO_JUMP = [
+            ".........WW.",
+            "...RRRRRRWW.",
+            "..RRRRRRRRR.",
+            "..MMFFFKF...",
+            ".MFMFFFKKFF.",
+            ".MFMFFFFKKK.",
+            "..MMFFFFF...",
+            "..RRRBRRRRR.",
+            ".WW.BBRBYY..",
+            "....BBBBBB..",
+            "..BBBBBBBBM.",
+            ".MM......MMM",
+            ".MM........."
+        ];
+
+        const SPRITE_BAFFO_SHOCK = [
+            ".WW.RRRRR.WW",
+            ".WW.RRRRR.WW",
+            "..MMFFWKW...",
+            ".MFMFFWKWFF.",
+            ".MFMFFKKKKK.",
+            "..MMFFKWWKF.",
+            "...RRBRRR...",
+            "..RRRBRBYY..",
+            "....BBBBBB..",
+            "...BBBBBBBB.",
+            "...BB....BB.",
+            "..MMM....MMM",
+            "..MMM....MMM"
+        ];
+
+        const SPRITE_BAFFO_PANCAKE = [
+            "..RRRRBBBBYYYYRR..",
+            ".RRRRRBBBBBBFFKKR.",
+            "WWWRRRRBBBBFFFFMMM",
+            "KKKKKKKKKKKKKKKKKK"
+        ];
+
+        // 12x11 Angry Goomba Mushroom Frame 1 & 2
+        const SPRITE_GOOMBA_1 = [
+            "....TTTT....",
+            "..TTTTTTTT..",
+            ".TTTTTTTTTT.",
+            ".TTWKTTKWTT.",
+            "TTTWKTTKWTTT",
+            "TTTKKKKKKTTT",
+            "TTTTTTTTTTTT",
+            "..CCCCCCCC..",
+            "..CCCCCCCC..",
+            ".KKKK..KKKK.",
+            ".KKKK..KKKK."
+        ];
+
+        const SPRITE_GOOMBA_2 = [
+            "....TTTT....",
+            "..TTTTTTTT..",
+            ".TTTTTTTTTT.",
+            ".TTWKTTKWTT.",
+            "TTTWKTTKWTTT",
+            "TTTKKKKKKTTT",
+            "TTTTTTTTTTTT",
+            "..CCCCCCCC..",
+            "..CCCCCCCC..",
+            "..KKKK..KKKK",
+            "...KKK..KKKK"
+        ];
+
+        // Flattened Squashed Goomba Sprite (when player jumps on its head!)
+        const SPRITE_GOOMBA_SQUASHED = [
+            "..TTTTTTTTTTTT..",
+            ".TTKWTTTTTTWKTT.",
+            "TTTKKKKKKKKKKTTT",
+            "..CCCCCCCCCCCC..",
+            ".KKKKK....KKKKK."
+        ];
+
+        // 12x8 Spiny Shell Enemy (Sharp spikes on top - do NOT jump on this!)
+        const SPRITE_SPINY = [
+            "..W...W...W.",
+            ".WWW.WWW.WWW",
+            ".RRRRRRRRRRR",
+            "RRRRWRRWRRRR",
+            "DDDDDDDDDDDD",
+            "WWWWWWWWWWWW",
+            ".KKKKKKKKKK.",
+            ".KK..KK..KK."
+        ];
+
+        /**
+         * Helper to draw a pixel matrix onto any canvas context
+         */
+        function drawPixelMatrix(ctx, matrix, x, y, pixelSize = 3) {
+            for (let row = 0; row < matrix.length; row++) {
+                const line = matrix[row];
+                for (let col = 0; col < line.length; col++) {
+                    const ch = line[col];
+                    if (ch !== '.' && PALETTE[ch]) {
+                        ctx.fillStyle = PALETTE[ch];
+                        ctx.fillRect(
+                            Math.floor(x + col * pixelSize),
+                            Math.floor(y + row * pixelSize),
+                            pixelSize,
+                            pixelSize
+                        );
+                    }
+                }
+            }
+        }
+
+        /**
+         * PROCEDURAL PIXEL-ART GIANT CONVERSE CHUCK TAYLOR ALL-STAR HIGH-TOP
+         */
+        function drawGiantConverseShoe(ctx, x, bottomY, shoeColorMode = 'black') {
+            const p = 4; // 4x4 logical pixels per block
+            const startX = Math.floor(x - 110);
+            const soleBottomY = Math.floor(bottomY);
+
+            const canvasPrimary = shoeColorMode === 'black' ? '#18181b' : '#dc2626';
+            const canvasHighlight = shoeColorMode === 'black' ? '#3f3f46' : '#ef4444';
+            const canvasShadow = shoeColorMode === 'black' ? '#09090b' : '#991b1b';
+
+            const rectBlocks = (bx, by, bw, bh, color) => {
+                ctx.fillStyle = color;
+                ctx.fillRect(
+                    startX + bx * p,
+                    soleBottomY - (by + bh) * p,
+                    bw * p,
+                    bh * p
+                );
+            };
+
+            // 1. GIANT PIXELATED LEG & RETRO TUBE SOCK EXTENDING TO TOP OF SKY
+            const shaftLeft = 6;
+            const shaftWidth = 22;
+            const topBlocks = Math.ceil(soleBottomY / p) + 10;
+
+            if (topBlocks > 48) {
+                rectBlocks(shaftLeft + 1, 48, shaftWidth - 2, topBlocks - 48, '#fca5a5');
+                rectBlocks(shaftLeft + 1, 48, 3, topBlocks - 48, '#f87171');
+                rectBlocks(shaftLeft, 48, 1, topBlocks - 48, '#000000');
+                rectBlocks(shaftLeft + shaftWidth - 1, 48, 1, topBlocks - 48, '#000000');
+            }
+
+            // White ribbed athletic sock (blocks Y: 34 to 48)
+            rectBlocks(shaftLeft, 34, shaftWidth, 14, '#ffffff');
+            rectBlocks(shaftLeft + 1, 34, 3, 14, '#e2e8f0');
+            rectBlocks(shaftLeft + 1, 44, shaftWidth - 2, 2, '#e52521');
+            rectBlocks(shaftLeft + 1, 41, shaftWidth - 2, 2, '#1d4ed8');
+            rectBlocks(shaftLeft, 34, 1, 14, '#000000');
+            rectBlocks(shaftLeft + shaftWidth - 1, 34, 1, 14, '#000000');
+            rectBlocks(shaftLeft, 48, shaftWidth, 1, '#000000');
+
+            // 2. HIGH-TOP CANVAS UPPER
+            rectBlocks(4, 16, 25, 18, canvasPrimary);
+            rectBlocks(5, 16, 3, 18, canvasShadow);
+            rectBlocks(7, 32, 21, 2, canvasHighlight);
+
+            rectBlocks(4, 7, 32, 10, canvasPrimary);
+            rectBlocks(28, 17, 4, 6, canvasPrimary);
+            rectBlocks(32, 14, 5, 6, canvasPrimary);
+            rectBlocks(36, 11, 5, 6, canvasPrimary);
+            rectBlocks(40, 8, 5, 6, canvasPrimary);
+
+            for (let sy = 8; sy < 33; sy += 2) {
+                rectBlocks(7, sy, 1, 1, '#d4d4d8');
+            }
+
+            rectBlocks(3, 7, 1, 27, '#000000');
+            rectBlocks(4, 34, 25, 1, '#000000');
+            rectBlocks(29, 24, 1, 10, '#000000');
+
+            // 3. WHITE LACES & METAL EYELETS
+            const laceSteps = [
+                { x: 27, y: 30 },
+                { x: 28, y: 26 },
+                { x: 29, y: 22 },
+                { x: 32, y: 18 },
+                { x: 36, y: 14 },
+                { x: 40, y: 11 }
+            ];
+            laceSteps.forEach((st) => {
+                rectBlocks(st.x - 2, st.y, 2, 2, '#94a3b8');
+                rectBlocks(st.x - 1, st.y, 4, 2, '#ffffff');
+                rectBlocks(st.x + 3, st.y, 1, 2, '#000000');
+            });
+
+            // 4. ICONIC CIRCULAR WHITE ANKLE PATCH WITH CHUCK TAYLOR STAR
+            rectBlocks(12, 16, 9, 11, '#000000');
+            rectBlocks(11, 17, 11, 9, '#000000');
+            rectBlocks(13, 17, 7, 9, '#ffffff');
+            rectBlocks(12, 18, 9, 7, '#ffffff');
+
+            rectBlocks(16, 23, 1, 2, '#1d4ed8');
+            rectBlocks(13, 21, 7, 2, '#1d4ed8');
+            rectBlocks(15, 20, 3, 4, '#e52521');
+            rectBlocks(14, 18, 2, 2, '#1d4ed8');
+            rectBlocks(17, 18, 2, 2, '#1d4ed8');
+
+            // 5. CLASSIC WHITE RUBBER TOE CAP
+            rectBlocks(44, 7, 14, 5, '#ffffff');
+            rectBlocks(45, 12, 11, 2, '#ffffff');
+            rectBlocks(47, 14, 7, 1, '#ffffff');
+            rectBlocks(48, 11, 6, 2, '#e0f2fe');
+            rectBlocks(43, 7, 1, 6, '#000000');
+            rectBlocks(44, 13, 2, 1, '#000000');
+            rectBlocks(46, 14, 2, 1, '#000000');
+            rectBlocks(48, 15, 6, 1, '#000000');
+            rectBlocks(54, 14, 2, 1, '#000000');
+            rectBlocks(56, 12, 2, 2, '#000000');
+            rectBlocks(58, 7, 1, 5, '#000000');
+
+            // 6. THICK VULCANIZED WHITE RUBBER MIDSOLE WITH BLACK RACING STRIPE
+            rectBlocks(2, 0, 57, 1, '#000000');
+            for (let lx = 3; lx < 58; lx += 3) {
+                rectBlocks(lx, 1, 2, 1, '#78350f');
+                rectBlocks(lx + 2, 1, 1, 1, '#18181b');
+            }
+
+            rectBlocks(2, 2, 57, 5, '#ffffff');
+            rectBlocks(2, 7, 57, 1, '#000000');
+            rectBlocks(1, 1, 1, 6, '#000000');
+            rectBlocks(59, 1, 1, 6, '#000000');
+
+            rectBlocks(3, 4, 55, 1, '#000000');
+            rectBlocks(3, 2, 5, 2, '#18181b');
+            rectBlocks(4, 2, 3, 1, '#ffffff');
+
+            for (let tx = 52; tx <= 57; tx += 2) {
+                rectBlocks(tx, 2, 1, 2, '#cbd5e1');
+                rectBlocks(tx, 5, 1, 2, '#cbd5e1');
+            }
+        }
+
+        /**
+         * PROCEDURAL PIXEL-ART GIANT WOMEN'S GREY ADIDAS CAMPUS 00s ("CAMPUS GRIGIA DA DONNA")
+         * Features: Feminine leg + cute white/pastel-pink ruffled crew sock, low-top chunky cool-grey suede
+         * silhouette, 3 thick serrated diagonal white Adidas stripes, puffy grey tongue with Trefoil patch,
+         * fat white laces, off-white/cream midsole, and classic gum-rubber herringbone outsole.
+         */
+        function drawGiantAdidasCampusGrey(ctx, x, bottomY) {
+            const p = 4; // 4x4 logical pixels per block
+            const startX = Math.floor(x - 112);
+            const soleBottomY = Math.floor(bottomY);
+
+            const suedeBase = '#8d929a';      // Cool grey suede main body
+            const suedeDark = '#70757d';      // Darker grey suede shading / toe & heel overlays
+            const suedeLight = '#a6abb3';     // Soft puffy grey suede highlight
+            const creamMidsole = '#f4f1ea';   // Off-white / vintage cream midsole
+            const gumSole = '#c68b59';        // Classic caramel gum outsole
+            const gumDark = '#9c6638';        // Gum tread grooves
+
+            const rectBlocks = (bx, by, bw, bh, color) => {
+                ctx.fillStyle = color;
+                ctx.fillRect(
+                    startX + bx * p,
+                    soleBottomY - (by + bh) * p,
+                    bw * p,
+                    bh * p
+                );
+            };
+
+            // 1. FEMININE ANKLE & CUTE WHITE + PASTEL PINK RIBBED CREW SOCK
+            const legLeft = 8;
+            const legWidth = 19;
+            const topBlocks = Math.ceil(soleBottomY / p) + 10;
+
+            if (topBlocks > 37) {
+                // Feminine warm skin leg extending to top of sky
+                rectBlocks(legLeft + 1, 37, legWidth - 2, topBlocks - 37, '#fbd38d');
+                rectBlocks(legLeft + 1, 37, 3, topBlocks - 37, '#f6ad55');
+                rectBlocks(legLeft + legWidth - 3, 37, 2, topBlocks - 37, '#fefcbf');
+                rectBlocks(legLeft, 37, 1, topBlocks - 37, '#000000');
+                rectBlocks(legLeft + legWidth - 1, 37, 1, topBlocks - 37, '#000000');
+            }
+
+            // Cute ruffled/ribbed crew sock (blocks Y: 22 to 37)
+            const sockLeft = 7;
+            const sockWidth = 21;
+            rectBlocks(sockLeft, 22, sockWidth, 15, '#ffffff');
+            rectBlocks(sockLeft + 1, 22, 3, 15, '#f1f5f9');
+            // Vertical ribbing lines on sock
+            for (let rx = sockLeft + 4; rx < sockLeft + sockWidth - 2; rx += 3) {
+                rectBlocks(rx, 23, 1, 10, '#e2e8f0');
+            }
+            // Pastel pink & rose feminine athletic stripes at top of sock
+            rectBlocks(sockLeft + 1, 33, sockWidth - 2, 2, '#f472b6');
+            rectBlocks(sockLeft + 1, 30, sockWidth - 2, 1, '#fbcfe8');
+            // Cute scalloped/frilly cuff at Y=36
+            for (let fx = sockLeft + 1; fx < sockLeft + sockWidth - 1; fx += 2) {
+                rectBlocks(fx, 37, 1, 1, '#ffffff');
+                rectBlocks(fx, 38, 1, 1, '#000000');
+            }
+            rectBlocks(sockLeft, 22, 1, 15, '#000000');
+            rectBlocks(sockLeft + sockWidth - 1, 22, 1, 15, '#000000');
+            rectBlocks(sockLeft, 37, sockWidth, 1, '#000000');
+
+            // 2. CHUNKY LOW-TOP GREY SUEDE UPPER & PUFFY COLLAR (Campus 00s profile)
+            // Padded collar & heel counter (Y: 7 to 22)
+            rectBlocks(3, 7, 26, 14, suedeBase);
+            rectBlocks(4, 19, 21, 3, suedeLight); // Puffy ankle collar cushion
+            rectBlocks(2, 8, 5, 11, suedeDark);   // Suede heel overlay cap
+            // White heel tab with black outline
+            rectBlocks(2, 18, 5, 4, '#ffffff');
+            rectBlocks(3, 19, 2, 2, suedeDark);
+
+            // Mid-foot & vamp suede body (Y: 7 to 18, X: 25 to 47)
+            rectBlocks(25, 7, 23, 10, suedeBase);
+            rectBlocks(25, 17, 15, 3, suedeBase);
+            rectBlocks(27, 19, 10, 2, suedeBase);
+
+            // Rounded suede toe-box (Campus signature full suede toe, no rubber shell)
+            rectBlocks(46, 7, 11, 7, suedeDark);
+            rectBlocks(45, 7, 10, 8, suedeBase);
+            rectBlocks(47, 14, 7, 2, suedeLight);
+            rectBlocks(54, 8, 4, 5, suedeDark);
+
+            // 3. PUFFY GREY SUEDE TONGUE WITH ADIDAS TREFOIL PATCH (Y: 19 to 26, X: 25 to 34)
+            rectBlocks(25, 20, 9, 6, suedeBase);
+            rectBlocks(26, 24, 7, 2, suedeLight);
+            rectBlocks(24, 21, 1, 5, '#000000');
+            rectBlocks(25, 26, 9, 1, '#000000');
+            rectBlocks(34, 20, 1, 6, '#000000');
+            // White & black tongue label badge
+            rectBlocks(28, 22, 4, 3, '#ffffff');
+            rectBlocks(29, 23, 2, 1, '#18181b');
+
+            // 4. ICONIC THREE THICK SERRATED WHITE ADIDAS STRIPES (///)
+            // Drawn diagonally across the grey suede quarter panel
+            const stripeOffsets = [13, 19, 25];
+            stripeOffsets.forEach((baseX) => {
+                for (let row = 0; row < 10; row++) {
+                    const sx = baseX + Math.floor(row * 0.6);
+                    const sy = 8 + row;
+                    // Black serrated edge shadow
+                    rectBlocks(sx - 1, sy, 1, 1, '#3f3f46');
+                    // Thick bright white stripe (3 blocks wide)
+                    rectBlocks(sx, sy, 3, 1, '#ffffff');
+                    // Serrated zig-zag tooth on right edge every even row
+                    if (row % 2 === 0) {
+                        rectBlocks(sx + 3, sy, 1, 1, '#e2e8f0');
+                    }
+                }
+            });
+            // Subtle gold "CAMPUS" pixel lettering parallel to the first stripe
+            rectBlocks(11, 14, 1, 1, '#facc15');
+            rectBlocks(12, 15, 1, 1, '#facc15');
+            rectBlocks(13, 16, 1, 1, '#facc15');
+
+            // 5. FAT WHITE 00s SKATE LACES ON THE VAMP
+            const fatLaces = [
+                { x: 31, y: 19 },
+                { x: 34, y: 17 },
+                { x: 37, y: 15 },
+                { x: 40, y: 13 }
+            ];
+            fatLaces.forEach((lc) => {
+                rectBlocks(lc.x - 1, lc.y, 5, 2, '#000000');
+                rectBlocks(lc.x, lc.y, 4, 2, '#ffffff');
+                rectBlocks(lc.x + 1, lc.y + 1, 2, 1, '#fce7f3'); // subtle pink-white highlight
+            });
+
+            // Black pixel outline around the entire chunky Campus upper
+            rectBlocks(1, 7, 1, 15, '#000000');
+            rectBlocks(2, 22, 23, 1, '#000000');
+            rectBlocks(34, 20, 3, 1, '#000000');
+            rectBlocks(37, 18, 4, 1, '#000000');
+            rectBlocks(41, 16, 6, 1, '#000000');
+            rectBlocks(47, 15, 8, 1, '#000000');
+            rectBlocks(55, 13, 3, 2, '#000000');
+            rectBlocks(58, 7, 1, 6, '#000000');
+
+            // 6. VINTAGE OFF-WHITE / CREAM CUPSOLE MIDSOLE & GUM HERRINGBONE OUTSOLE
+            rectBlocks(1, 7, 58, 1, '#000000'); // Upper-to-midsole seam
+            rectBlocks(2, 2, 56, 5, creamMidsole);
+            // Subtle midsole stitch groove & heel embossing
+            rectBlocks(3, 5, 54, 1, '#e2ddd2');
+            rectBlocks(4, 3, 6, 2, '#d6d1c4');
+            rectBlocks(1, 1, 1, 6, '#000000');
+            rectBlocks(58, 1, 1, 6, '#000000');
+
+            // Gum-rubber bottom outsole tread (Y: 0 to 2)
+            rectBlocks(2, 0, 56, 1, '#000000');
+            for (let gx = 2; gx < 57; gx += 3) {
+                rectBlocks(gx, 1, 2, 1, gumSole);
+                rectBlocks(gx + 2, 1, 1, 1, gumDark);
+            }
+        }
+
+        function drawGiantShoe(ctx, x, bottomY, shoeColorMode) {
+            if (shoeColorMode === 'campus_grey') {
+                drawGiantAdidasCampusGrey(ctx, x, bottomY);
+            } else {
+                drawGiantConverseShoe(ctx, x, bottomY, shoeColorMode);
+            }
+        }
+
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const LOGICAL_WIDTH = 800;
+        const LOGICAL_HEIGHT = 450;
+        const GROUND_Y = 386;
+
+        // UI Elements
+        const hudScore = document.getElementById('hudScore');
+        const hudCoins = document.getElementById('hudCoins');
+        const hudGoombas = document.getElementById('hudGoombas');
+        const hudSpeed = document.getElementById('hudSpeed');
+        const hudHighScore = document.getElementById('hudHighScore');
+        const startOverlay = document.getElementById('startOverlay');
+        const gameOverOverlay = document.getElementById('gameOverOverlay');
+        const finalScoreEl = document.getElementById('finalScore');
+        const finalCoinsEl = document.getElementById('finalCoins');
+        const finalGoombasEl = document.getElementById('finalGoombas');
+        const finalHighScoreEl = document.getElementById('finalHighScore');
+        const newRecordBadge = document.getElementById('newRecordBadge');
+
+        const skinToggleBtn = document.getElementById('skinToggleBtn');
+        const skinBtnLabel = document.getElementById('skinBtnLabel');
+        const cardMiniGifo = document.getElementById('cardMiniGifo');
+        const cardSuperBaffo = document.getElementById('cardSuperBaffo');
+
+        const difficultyTopBtn = document.getElementById('difficultyTopBtn');
+        const difficultyTopLabel = document.getElementById('difficultyTopLabel');
+        const mobileModeBtn = document.getElementById('mobileModeBtn');
+        const mobileModeLabel = document.getElementById('mobileModeLabel');
+        const mobileTouchDeck = document.getElementById('mobileTouchDeck');
+        const shoeColorBtn = document.getElementById('shoeColorBtn');
+        const shoeColorLabel = document.getElementById('shoeColorLabel');
+        const muteBtn = document.getElementById('muteBtn');
+        const muteIcon = document.getElementById('muteIcon');
+
+        // Persistent High Score
+        let highScore = 0;
+        try {
+            highScore = parseInt(localStorage.getItem('superMiniGifoHighScore') || '0', 10);
+        } catch (e) {
+            highScore = 0;
+        }
+        hudHighScore.textContent = String(highScore).padStart(6, '0');
+
+        // Active Character Skin: 'minigifo' (default) or 'baffo'
+        let currentSkin = 'minigifo';
+
+        // Giant Shoe Skin Mode: 'campus_grey' (Adidas Campus Grigia da donna), 'black' (Converse Nera), 'red' (Converse Rossa)
+        const SHOE_SKINS = [
+            { key: 'campus_grey', label: 'SCARPA: CAMPUS GRIGIA', name: 'Adidas Campus Grigia da donna' },
+            { key: 'black',       label: 'SCARPA: CONVERSE NERA', name: 'Converse Chuck Taylor Nera' },
+            { key: 'red',         label: 'SCARPA: CONVERSE ROSSA', name: 'Converse Chuck Taylor Rossa' }
+        ];
+        let currentShoeIndex = 0;
+        let converseColorMode = SHOE_SKINS[0].key;
+
+        // Difficulty Selector Configuration (Controls initial speed while preserving gradual progression)
+        const DIFFICULTY_LEVELS = [
+            { key: 'LENTA',   label: 'LENTA',   baseSpeed: 2.15, maxSpeed: 6.80 },
+            { key: 'NORMALE', label: 'NORMALE', baseSpeed: 3.40, maxSpeed: 7.80 },
+            { key: 'VELOCE',  label: 'VELOCE',  baseSpeed: 4.80, maxSpeed: 8.90 },
+            { key: 'TURBO',   label: 'TURBO',   baseSpeed: 6.40, maxSpeed: 10.20 }
+        ];
+        let currentDifficultyIndex = 0;
+        let baseStartSpeed = DIFFICULTY_LEVELS[0].baseSpeed;
+        let maxGameSpeed = DIFFICULTY_LEVELS[0].maxSpeed;
+
+        // Mobile Mode State
+        let isMobileMode = false;
+
+        // Game States: 'START', 'PLAYING', 'STOMP_WARNING', 'STOMP_FALLING', 'STOMP_IMPACT', 'GAMEOVER'
+        let gameState = 'START';
+
+        let score = 0;
+        let distanceScore = 0;
+        let bonusScore = 0;
+        let coinsCollected = 0;
+        let goombasStomped = 0;
+        let gameSpeed = baseStartSpeed;
+        let groundScrollX = 0;
+        let frameCount = 0;
+        let lastFrameTime = performance.now();
+        let lastObstacleReason = '';
+
+        // Protagonist Physics
+        const player = {
+            x: 125,
+            y: GROUND_Y - 42,
+            width: 36,
+            height: 42,
+            vy: 0,
+            gravity: 0.44,
+            jumpForce: -10.2,
+            jumpsRemaining: 2,
+            isGrounded: true,
+            jumpHoldTimer: 0,
+            isHoldingJump: false,
+            animFrame: 0,
+            animTimer: 0
+        };
+
+        // Giant Converse Foot State
+        const converseFoot = {
+            x: 125,
+            bottomY: -60,
+            targetY: GROUND_Y,
+            vy: 0,
+            warningTimer: 0,
+            impactTimer: 0,
+            shakeIntensity: 0,
+            shockwaveRadius: 0,
+            shockwaveAlpha: 0
+        };
+
+        function selectDifficulty(index) {
+            currentDifficultyIndex = (index + DIFFICULTY_LEVELS.length) % DIFFICULTY_LEVELS.length;
+            const diff = DIFFICULTY_LEVELS[currentDifficultyIndex];
+            baseStartSpeed = diff.baseSpeed;
+            maxGameSpeed = diff.maxSpeed;
+
+            difficultyTopLabel.textContent = `DIFF: ${diff.label}`;
+
+            document.querySelectorAll('.diff-pill').forEach((btn) => {
+                const btnIdx = parseInt(btn.getAttribute('data-diff'), 10);
+                if (btnIdx === currentDifficultyIndex) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+
+            if (gameState === 'START' || gameState === 'GAMEOVER') {
+                gameSpeed = baseStartSpeed;
+                updateHUD();
+            }
+        }
+
+        function setMobileMode(enabled) {
+            isMobileMode = Boolean(enabled);
+            if (isMobileMode) {
+                mobileModeLabel.textContent = 'MOBILE: ON';
+                mobileModeBtn.classList.remove('bg-slate-700');
+                mobileModeBtn.classList.add('bg-emerald-600');
+                mobileTouchDeck.classList.remove('hidden');
+            } else {
+                mobileModeLabel.textContent = 'MOBILE: OFF';
+                mobileModeBtn.classList.remove('bg-emerald-600');
+                mobileModeBtn.classList.add('bg-slate-700');
+                mobileTouchDeck.classList.add('hidden');
+            }
+        }
+
+        function selectSkin(skinKey) {
+            currentSkin = skinKey;
+            if (currentSkin === 'minigifo') {
+                skinBtnLabel.textContent = 'SKIN: MINI GIFO';
+                cardMiniGifo.classList.add('active');
+                cardSuperBaffo.classList.remove('active');
+            } else {
+                skinBtnLabel.textContent = 'SKIN: SUPER BAFFO';
+                cardSuperBaffo.classList.add('active');
+                cardMiniGifo.classList.remove('active');
+            }
+            if (gameState === 'START') {
+                renderGame();
+            }
+        }
+
+        function renderSkinPreviewCards() {
+            const cGifo = document.getElementById('previewMiniGifo');
+            const cBaffo = document.getElementById('previewSuperBaffo');
+            if (cGifo) {
+                const gCtx = cGifo.getContext('2d');
+                gCtx.clearRect(0, 0, cGifo.width, cGifo.height);
+                drawPixelMatrix(gCtx, SPRITE_GIFO_RUN1, 4, 2, 4);
+            }
+            if (cBaffo) {
+                const bCtx = cBaffo.getContext('2d');
+                bCtx.clearRect(0, 0, cBaffo.width, cBaffo.height);
+                drawPixelMatrix(bCtx, SPRITE_BAFFO_RUN1, 4, 4, 4);
+            }
+        }
+
+        let clouds = [];
+        let hills = [];
+        let bushes = [];
+        let floatingBlocks = [];
+        let obstacles = [];
+        let coins = [];
+        let particles = [];
+        let floatingTexts = [];
+        let nextObstacleDist = 260;
+        let nextCoinClusterDist = 150;
+
+        function initScenery() {
+            clouds = [];
+            hills = [];
+            bushes = [];
+
+            for (let i = 0; i < 6; i++) {
+                clouds.push({
+                    x: i * 160 + Math.random() * 60,
+                    y: 45 + Math.random() * 110,
+                    size: 1 + Math.floor(Math.random() * 2),
+                    speedFactor: 0.2 + Math.random() * 0.15
+                });
+            }
+
+            for (let i = 0; i < 4; i++) {
+                hills.push({
+                    x: i * 240 + Math.random() * 50,
+                    width: 120 + Math.floor(Math.random() * 60),
+                    height: 55 + Math.floor(Math.random() * 45)
+                });
+            }
+
+            for (let i = 0; i < 6; i++) {
+                bushes.push({
+                    x: i * 155 + Math.random() * 40,
+                    segments: 2 + Math.floor(Math.random() * 2)
+                });
+            }
+        }
+
+        function resetGame() {
+            score = 0;
+            distanceScore = 0;
+            bonusScore = 0;
+            coinsCollected = 0;
+            goombasStomped = 0;
+            gameSpeed = baseStartSpeed;
+            frameCount = 0;
+
+            player.y = GROUND_Y - player.height;
+            player.vy = 0;
+            player.isGrounded = true;
+            player.jumpsRemaining = 2;
+            player.isHoldingJump = false;
+            player.jumpHoldTimer = 0;
+
+            obstacles = [];
+            coins = [];
+            floatingBlocks = [];
+            particles = [];
+            floatingTexts = [];
+
+            nextObstacleDist = 240;
+            nextCoinClusterDist = 130;
+
+            converseFoot.bottomY = -60;
+            converseFoot.shakeIntensity = 0;
+            converseFoot.shockwaveRadius = 0;
+            converseFoot.shockwaveAlpha = 0;
+
+            initScenery();
+            updateHUD();
+        }
+
+        function updateHUD() {
+            hudScore.textContent = String(Math.floor(score)).padStart(6, '0');
+            hudCoins.textContent = String(coinsCollected).padStart(2, '0');
+            hudGoombas.textContent = String(goombasStomped).padStart(2, '0');
+            const speedMult = (gameSpeed / DIFFICULTY_LEVELS[0].baseSpeed).toFixed(1);
+            hudSpeed.textContent = `${speedMult}x`;
+            hudHighScore.textContent = String(Math.floor(highScore)).padStart(6, '0');
+        }
+
+        /**
+         * Checks that a candidate coin position (cx, cy) does NOT overlap or clip inside
+         * any obstacle (Pipe, Goomba, Spiny), physical floating block, or existing coin.
+         */
+        function isCoinPositionSafe(cx, cy, pad = 16) {
+            if (cy > GROUND_Y - 18 || cy < 36) return false;
+
+            // Check against all obstacles (with generous vertical/horizontal padding)
+            for (let i = 0; i < obstacles.length; i++) {
+                const ob = obstacles[i];
+                if (
+                    cx + pad > ob.x - 10 &&
+                    cx - pad < ob.x + ob.width + 10 &&
+                    cy + pad > ob.y - 10 &&
+                    cy - pad < ob.y + ob.height + 10
+                ) {
+                    return false;
+                }
+            }
+
+            // Check against all physical floating blocks so coins never spawn inside bricks
+            for (let i = 0; i < floatingBlocks.length; i++) {
+                const fb = floatingBlocks[i];
+                if (
+                    cx + pad > fb.x - 6 &&
+                    cx - pad < fb.x + fb.width + 6 &&
+                    cy + pad > fb.y - 6 &&
+                    cy - pad < fb.y + fb.height + 6
+                ) {
+                    return false;
+                }
+            }
+
+            // Avoid stacking duplicate coins on top of each other
+            for (let i = 0; i < coins.length; i++) {
+                const c = coins[i];
+                if (Math.hypot(cx - c.x, cy - c.baseY) < 20) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        function addSafeCoin(cx, cy, phase = 0) {
+            if (isCoinPositionSafe(cx, cy)) {
+                coins.push({
+                    x: cx,
+                    y: cy,
+                    baseY: cy,
+                    radius: 11,
+                    collected: false,
+                    phase: phase
+                });
+            }
+        }
+
+        function spawnObstacle() {
+            const roll = Math.random();
+            const spawnX = LOGICAL_WIDTH + 60;
+
+            if (roll < 0.48) {
+                // Angry Walking Goomba (Can be stomped from above!)
+                const spawnPair = distanceScore > 120 && Math.random() < 0.38;
+                const count = spawnPair ? 2 : 1;
+
+                for (let g = 0; g < count; g++) {
+                    obstacles.push({
+                        type: 'GOOMBA',
+                        name: 'un Goomba Arrabbiato',
+                        x: spawnX + g * 56,
+                        y: GROUND_Y - 33,
+                        width: 36,
+                        height: 33,
+                        vx: -0.55,
+                        passed: false,
+                        squashed: false,
+                        squashTimer: 0
+                    });
+                }
+
+                // Spawn reachable physical floating brick platform safely behind/after the Goomba
+                if (Math.random() < 0.65) {
+                    const rowX = spawnX + (count - 1) * 56 + 70;
+                    spawnFloatingBrickRow(rowX, GROUND_Y - 88, 3);
+                }
+            } else if (roll < 0.80) {
+                // Classic Green Warp Pipe (No floating bricks above pipes so player is never trapped)
+                const pipeHeights = distanceScore < 150 ? [44, 54] : [48, 62, 74];
+                const h = pipeHeights[Math.floor(Math.random() * pipeHeights.length)];
+                const pipeX = spawnX;
+                obstacles.push({
+                    type: 'PIPE',
+                    name: 'un Tubo Verde',
+                    x: pipeX,
+                    y: GROUND_Y - h,
+                    width: 46,
+                    height: h,
+                    passed: false
+                });
+
+                // Parabolic coin arc cleanly guiding the jump over the pipe
+                spawnCoinArc(pipeX + 23, GROUND_Y - h - 48, 5, 26);
+            } else {
+                // Spiny Red Shell (Has sharp white spikes on top - must be jumped over!)
+                obstacles.push({
+                    type: 'SPINY',
+                    name: 'un Guscio Spinato',
+                    x: spawnX,
+                    y: GROUND_Y - 24,
+                    width: 36,
+                    height: 24,
+                    vx: -0.75,
+                    passed: false
+                });
+                spawnCoinArc(spawnX + 18, GROUND_Y - 78, 5, 24);
+            }
+        }
+
+        function spawnCoinArc(centerX, peakY, count, spacing = 26) {
+            const half = (count - 1) / 2;
+            for (let i = 0; i < count; i++) {
+                const offset = i - half;
+                const cx = centerX + offset * spacing;
+                // True smooth parabolic jump trajectory arc
+                const cy = Math.round(peakY + (offset * offset) * 7);
+                addSafeCoin(cx, cy, i * 0.55);
+            }
+        }
+
+        function spawnFloatingBrickRow(startX, y, count) {
+            // Ensure floating bricks don't overlap any existing pipe or obstacle horizontally
+            for (let i = 0; i < obstacles.length; i++) {
+                const ob = obstacles[i];
+                if (ob.type === 'PIPE' && startX < ob.x + ob.width + 45 && startX + count * 32 > ob.x - 45) {
+                    return;
+                }
+            }
+
+            for (let i = 0; i < count; i++) {
+                const isQuestion = i === Math.floor(count / 2);
+                const bx = startX + i * 32;
+                floatingBlocks.push({
+                    x: bx,
+                    y: y,
+                    baseY: y,
+                    width: 32,
+                    height: 32,
+                    isQuestion: isQuestion,
+                    isUsed: false,
+                    bumpOffset: 0,
+                    bumpVelocity: 0
+                });
+            }
+
+            // Spawn a neat horizontal line of coins centered above the physical brick platform
+            for (let i = 0; i < count; i++) {
+                const bx = startX + i * 32;
+                addSafeCoin(bx + 16, y - 28, i * 0.5);
+            }
+        }
+
+        function spawnIndependentCoins() {
+            const startX = LOGICAL_WIDTH + 60;
+            const patternRoll = Math.random();
+
+            if (patternRoll < 0.38) {
+                // Standalone physical floating brick platform with coins on top
+                const count = 3 + Math.floor(Math.random() * 2);
+                spawnFloatingBrickRow(startX, GROUND_Y - 88, count);
+            } else if (patternRoll < 0.72) {
+                // Neat ground-level or low-hover horizontal line in clear space
+                const rowY = Math.random() < 0.5 ? GROUND_Y - 28 : GROUND_Y - 66;
+                const count = 4 + Math.floor(Math.random() * 2);
+                for (let i = 0; i < count; i++) {
+                    addSafeCoin(startX + i * 28, rowY, i * 0.45);
+                }
+            } else {
+                // Clean parabolic jump arc in open space
+                spawnCoinArc(startX + 56, GROUND_Y - 92, 5, 26);
+            }
+        }
+
+        function createDustParticles(x, y, count = 8, color = '#ffffff') {
+            for (let i = 0; i < count; i++) {
+                particles.push({
+                    x: x + (Math.random() - 0.5) * 20,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 6,
+                    vy: -Math.random() * 4 - 1,
+                    size: 4 + Math.floor(Math.random() * 5),
+                    color: color,
+                    alpha: 1,
+                    decay: 0.03 + Math.random() * 0.02,
+                    gravity: 0.15
+                });
+            }
+        }
+
+        function createStompExplosionParticles(centerX, groundY) {
+            const colors = ['#ffffff', '#e2e8f0', '#facc15', '#ef4444', '#d97706'];
+            for (let i = 0; i < 42; i++) {
+                const dir = i % 2 === 0 ? -1 : 1;
+                const speedX = (2.5 + Math.random() * 11) * dir;
+                const speedY = -1.5 - Math.random() * 8.5;
+                particles.push({
+                    x: centerX + dir * (20 + Math.random() * 55),
+                    y: groundY - 4 - Math.random() * 12,
+                    vx: speedX,
+                    vy: speedY,
+                    size: 5 + Math.floor(Math.random() * 7),
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    alpha: 1,
+                    decay: 0.016 + Math.random() * 0.015,
+                    gravity: 0.25
+                });
+            }
+        }
+
+        function addFloatingText(text, x, y, color = '#facc15') {
+            floatingTexts.push({
+                text,
+                x,
+                y,
+                vy: -1.5,
+                alpha: 1,
+                color
+            });
+        }
+
+        function handleJumpStart() {
+            if (gameState === 'START') {
+                startGame();
+                return;
+            }
+            if (gameState === 'GAMEOVER') {
+                startGame();
+                return;
+            }
+            if (gameState !== 'PLAYING') return;
+
+            if (player.jumpsRemaining > 0) {
+                const isDouble = !player.isGrounded;
+                player.vy = isDouble ? player.jumpForce * 0.92 : player.jumpForce;
+                player.isGrounded = false;
+                player.jumpsRemaining--;
+                player.isHoldingJump = true;
+                player.jumpHoldTimer = 14;
+
+                sound.playJump(isDouble);
+                createDustParticles(
+                    player.x + player.width / 2,
+                    player.y + player.height,
+                    isDouble ? 10 : 6,
+                    isDouble ? '#fde047' : '#e2e8f0'
+                );
+            }
+        }
+
+        function handleJumpEnd() {
+            player.isHoldingJump = false;
+        }
+
+        function triggerConverseStompSequence(obstacleName) {
+            gameState = 'STOMP_WARNING';
+            const heroName = currentSkin === 'minigifo' ? 'Mini Gifo' : 'Super Baffo';
+            const shoeName = SHOE_SKINS[currentShoeIndex].name;
+            lastObstacleReason = `${heroName} ha urtato ${obstacleName} ed è stato spiaccicato dalla ${shoeName} gigante!`;
+
+            converseFoot.x = player.x + player.width / 2 + 18;
+            converseFoot.bottomY = -40;
+            converseFoot.targetY = GROUND_Y;
+            converseFoot.vy = 24;
+            converseFoot.warningTimer = 18;
+            converseFoot.impactTimer = 52;
+            converseFoot.shakeIntensity = 0;
+
+            sound.playCollisionShock();
+            sound.startDescendingWhistle(0.45);
+            addFloatingText('?!', player.x + 16, player.y - 12, '#ef4444');
+        }
+
+        function updateGame(dt) {
+            frameCount++;
+
+            // Update particles & floating score popups
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const pt = particles[i];
+                pt.x += pt.vx * dt;
+                pt.y += pt.vy * dt;
+                pt.vy += (pt.gravity || 0) * dt;
+                pt.alpha -= pt.decay * dt;
+                if (pt.alpha <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+
+            for (let i = floatingTexts.length - 1; i >= 0; i--) {
+                const ft = floatingTexts[i];
+                ft.y += ft.vy * dt;
+                ft.alpha -= 0.024 * dt;
+                if (ft.alpha <= 0) {
+                    floatingTexts.splice(i, 1);
+                }
+            }
+
+            // Giant Converse Foot State Machine
+            if (gameState === 'STOMP_WARNING') {
+                converseFoot.warningTimer -= dt;
+                if (converseFoot.warningTimer <= 0) {
+                    gameState = 'STOMP_FALLING';
+                }
+                return;
+            }
+
+            if (gameState === 'STOMP_FALLING') {
+                converseFoot.vy += 4.0 * dt;
+                converseFoot.bottomY += converseFoot.vy * dt;
+
+                if (converseFoot.bottomY >= converseFoot.targetY) {
+                    converseFoot.bottomY = converseFoot.targetY;
+                    gameState = 'STOMP_IMPACT';
+
+                    player.y = GROUND_Y - 12;
+                    converseFoot.shakeIntensity = 22;
+                    converseFoot.shockwaveRadius = 12;
+                    converseFoot.shockwaveAlpha = 1;
+
+                    sound.stopWhistle();
+                    sound.playGiantConverseStomp();
+                    createStompExplosionParticles(converseFoot.x, GROUND_Y);
+                    addFloatingText('SBAM!!', converseFoot.x - 30, GROUND_Y - 150, '#ef4444');
+                }
+                return;
+            }
+
+            if (gameState === 'STOMP_IMPACT') {
+                if (converseFoot.shakeIntensity > 0) {
+                    converseFoot.shakeIntensity *= Math.pow(0.86, dt);
+                    if (converseFoot.shakeIntensity < 0.5) converseFoot.shakeIntensity = 0;
+                }
+                if (converseFoot.shockwaveAlpha > 0) {
+                    converseFoot.shockwaveRadius += 14 * dt;
+                    converseFoot.shockwaveAlpha -= 0.055 * dt;
+                }
+                converseFoot.impactTimer -= dt;
+                if (converseFoot.impactTimer <= 0) {
+                    showGameOverScreen();
+                }
+                return;
+            }
+
+            if (gameState !== 'PLAYING') return;
+
+            // Gradual acceleration starting from the chosen difficulty's baseStartSpeed
+            gameSpeed = Math.min(maxGameSpeed, baseStartSpeed + Math.pow(distanceScore / 520, 0.85) * 0.55);
+            distanceScore += gameSpeed * 0.15 * dt;
+            score = Math.floor(distanceScore + bonusScore);
+
+            if (score > highScore) {
+                highScore = score;
+            }
+
+            // Scroll Ground & Scenery
+            groundScrollX = (groundScrollX + gameSpeed * dt) % 32;
+
+            clouds.forEach(c => {
+                c.x -= gameSpeed * c.speedFactor * dt;
+                if (c.x < -120) {
+                    c.x = LOGICAL_WIDTH + 60 + Math.random() * 80;
+                    c.y = 40 + Math.random() * 110;
+                }
+            });
+
+            hills.forEach(h => {
+                h.x -= gameSpeed * 0.35 * dt;
+                if (h.x + h.width < -40) {
+                    h.x = LOGICAL_WIDTH + 60 + Math.random() * 90;
+                }
+            });
+
+            bushes.forEach(b => {
+                b.x -= gameSpeed * 0.65 * dt;
+                if (b.x < -100) {
+                    b.x = LOGICAL_WIDTH + 40 + Math.random() * 80;
+                }
+            });
+
+            // Protagonist Jump & Gravity Physics
+            const prevPlayerTop = player.y;
+            const prevPlayerBottom = player.y + player.height;
+
+            if (player.isHoldingJump && player.jumpHoldTimer > 0 && player.vy < 0) {
+                player.vy -= 0.25 * dt;
+                player.jumpHoldTimer -= dt;
+            }
+
+            player.y += player.vy * dt;
+            player.vy += player.gravity * dt;
+
+            // Update Floating Bricks & Resolve Physical Platform Collisions (Top Land & Bottom Headbutt)
+            let landedOnBlock = false;
+
+            for (let i = floatingBlocks.length - 1; i >= 0; i--) {
+                const fb = floatingBlocks[i];
+                fb.x -= gameSpeed * dt;
+
+                // Animate block bump recoil when hit from below
+                if (fb.bumpOffset < 0 || fb.bumpVelocity !== 0) {
+                    fb.bumpOffset += fb.bumpVelocity * dt;
+                    fb.bumpVelocity += 1.35 * dt;
+                    if (fb.bumpOffset >= 0) {
+                        fb.bumpOffset = 0;
+                        fb.bumpVelocity = 0;
+                    }
+                }
+                fb.y = fb.baseY + fb.bumpOffset;
+
+                if (fb.x + fb.width < -40) {
+                    floatingBlocks.splice(i, 1);
+                    continue;
+                }
+
+                // Horizontal overlap between player feet/head and the physical brick
+                const horizOverlap =
+                    player.x + player.width - 7 > fb.x &&
+                    player.x + 7 < fb.x + fb.width;
+
+                if (horizOverlap) {
+                    // 1. TOP COLLISION: Player falling onto or walking along top of floating brick
+                    if (
+                        player.vy >= 0 &&
+                        prevPlayerBottom <= fb.baseY + 11 &&
+                        player.y + player.height >= fb.baseY
+                    ) {
+                        player.y = fb.baseY - player.height;
+                        player.vy = 0;
+                        player.isGrounded = true;
+                        player.jumpsRemaining = 2;
+                        landedOnBlock = true;
+                    }
+                    // 2. BOTTOM COLLISION (HEADBUTT / BONK): Player jumping upward into underside of brick
+                    else if (
+                        player.vy < 0 &&
+                        prevPlayerTop >= fb.baseY + fb.height - 12 &&
+                        player.y <= fb.baseY + fb.height
+                    ) {
+                        player.y = fb.baseY + fb.height;
+                        player.vy = 1.8;
+                        player.isHoldingJump = false;
+                        player.jumpHoldTimer = 0;
+
+                        // Trigger classic Mario block upward bump animation
+                        fb.bumpOffset = -8;
+                        fb.bumpVelocity = 0.6;
+                        sound.playBlockBump();
+                        createDustParticles(fb.x + fb.width / 2, fb.baseY, 5, '#fde047');
+
+                        // If it's an active '?' Question Block, pop out a bonus coin!
+                        if (fb.isQuestion && !fb.isUsed) {
+                            fb.isUsed = true;
+                            coinsCollected++;
+                            bonusScore += 100;
+                            sound.playCoin();
+                            createDustParticles(fb.x + fb.width / 2, fb.baseY - 14, 12, '#facc15');
+                            addFloatingText('+100 COIN!', fb.x - 10, fb.baseY - 18, '#fde047');
+                        }
+                    }
+                }
+            }
+
+            // Ground collision or walking off the edge of a floating brick platform
+            if (player.y >= GROUND_Y - player.height) {
+                player.y = GROUND_Y - player.height;
+                player.vy = 0;
+                player.isGrounded = true;
+                player.jumpsRemaining = 2;
+            } else if (!landedOnBlock) {
+                player.isGrounded = false;
+            }
+
+            // Running Sprite Animation synced to current speed
+            player.animTimer += gameSpeed * 0.055 * dt;
+            if (player.animTimer >= 1) {
+                player.animTimer = 0;
+                player.animFrame = (player.animFrame + 1) % 2;
+            }
+
+            // Spawn Obstacles & Coins
+            nextObstacleDist -= gameSpeed * dt;
+            if (nextObstacleDist <= 0) {
+                spawnObstacle();
+                const minGap = Math.max(205, 240 + (gameSpeed - DIFFICULTY_LEVELS[0].baseSpeed) * 20);
+                nextObstacleDist = minGap + Math.random() * 135;
+            }
+
+            nextCoinClusterDist -= gameSpeed * dt;
+            if (nextCoinClusterDist <= 0) {
+                if (nextObstacleDist > 115) {
+                    spawnIndependentCoins();
+                }
+                nextCoinClusterDist = 185 + Math.random() * 130;
+            }
+
+            // Update Coins & Check Collection
+            for (let i = coins.length - 1; i >= 0; i--) {
+                const c = coins[i];
+                c.x -= gameSpeed * dt;
+                c.y = c.baseY + Math.sin(frameCount * 0.1 + c.phase) * 3;
+
+                const px = player.x + player.width / 2;
+                const py = player.y + player.height / 2;
+                const dx = px - c.x;
+                const dy = py - c.y;
+
+                if (Math.hypot(dx, dy) < c.radius + 18) {
+                    coinsCollected++;
+                    bonusScore += 100;
+                    sound.playCoin();
+                    createDustParticles(c.x, c.y, 8, '#facc15');
+                    addFloatingText('+100', c.x, c.y - 10, '#fde047');
+                    coins.splice(i, 1);
+                    continue;
+                }
+
+                if (c.x < -40) {
+                    coins.splice(i, 1);
+                }
+            }
+
+            const pBox = {
+                x: player.x + 6,
+                y: player.y + 4,
+                w: player.width - 12,
+                h: player.height - 6
+            };
+
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                const ob = obstacles[i];
+
+                // Keep squashed Goombas on the ground briefly before removing
+                if (ob.squashed) {
+                    ob.x -= gameSpeed * dt;
+                    ob.squashTimer -= dt;
+                    if (ob.squashTimer <= 0 || ob.x + ob.width < -60) {
+                        obstacles.splice(i, 1);
+                    }
+                    continue;
+                }
+
+                ob.x -= (gameSpeed + (ob.vx ? Math.abs(ob.vx) : 0)) * dt;
+
+                // Award +50 bonus points when cleanly jumping over a non-squashed obstacle
+                if (!ob.passed && ob.x + ob.width < player.x) {
+                    ob.passed = true;
+                    bonusScore += 50;
+                    addFloatingText('+50', player.x, player.y - 8, '#4ade80');
+                }
+
+                const oBox = {
+                    x: ob.x + 4,
+                    y: ob.y + 4,
+                    w: ob.width - 8,
+                    h: ob.height - 6
+                };
+
+                const overlaps =
+                    pBox.x < oBox.x + oBox.w &&
+                    pBox.x + pBox.w > oBox.x &&
+                    pBox.y < oBox.y + oBox.h &&
+                    pBox.y + pBox.h > oBox.y;
+
+                if (overlaps) {
+                    // Stompable Goomba check: player is falling downward and feet land on top of Goomba
+                    const isFallingDown = player.vy > 0;
+                    const landedOnTop =
+                        prevPlayerBottom <= ob.y + ob.height * 0.65 ||
+                        (player.y + player.height) <= ob.y + ob.height * 0.65;
+
+                    if (ob.type === 'GOOMBA' && isFallingDown && landedOnTop) {
+                        ob.squashed = true;
+                        ob.passed = true;
+                        ob.squashTimer = 25;
+
+                        goombasStomped++;
+                        bonusScore += 200;
+
+                        // Bounce player upward & allow 1 double-jump in air
+                        player.y = ob.y - player.height;
+                        player.vy = -8.8;
+                        player.isGrounded = false;
+                        player.jumpsRemaining = 1;
+
+                        sound.playStompSound();
+                        createDustParticles(ob.x + ob.width / 2, ob.y + 18, 12, '#facc15');
+                        createDustParticles(ob.x + ob.width / 2, ob.y + 24, 8, '#ffffff');
+                        addFloatingText('+200 STOMP!', ob.x - 12, ob.y - 12, '#fb923c');
+                        continue;
+                    } else {
+                        triggerConverseStompSequence(ob.name);
+                        break;
+                    }
+                }
+
+                if (ob.x + ob.width < -60) {
+                    obstacles.splice(i, 1);
+                }
+            }
+
+            updateHUD();
+        }
+
+        function drawPixelCloud(x, y, size) {
+            const unit = 8 * size;
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(x - 2, y + unit - 2, unit * 4 + 4, unit * 2 + 4);
+            ctx.fillRect(x + unit - 2, y - 2, unit * 2 + 4, unit * 3 + 4);
+
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(x, y + unit, unit * 4, unit * 2);
+            ctx.fillRect(x + unit, y, unit * 2, unit * 3);
+
+            ctx.fillStyle = '#dbeafe';
+            ctx.fillRect(x + 4, y + unit * 2 + 2, unit * 4 - 8, unit - 4);
+        }
+
+        function drawPixelHill(h) {
+            const steps = 6;
+            const stepW = h.width / steps;
+            const stepH = h.height / steps;
+
+            for (let s = 0; s < steps; s++) {
+                const w = h.width - s * stepW;
+                const x = Math.floor(h.x + (s * stepW) / 2);
+                const y = Math.floor(GROUND_Y - (s + 1) * stepH);
+                const sh = Math.ceil(stepH + 2);
+
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(x - 3, y - 3, w + 6, sh + 3);
+                ctx.fillStyle = '#16a34a';
+                ctx.fillRect(x, y, w, sh);
+                ctx.fillStyle = '#4ade80';
+                ctx.fillRect(x + 4, y + 3, 8, sh - 3);
+            }
+        }
+
+        function drawPixelBush(b) {
+            const segW = 24;
+            const totalW = b.segments * segW;
+            const y = GROUND_Y - 22;
+
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(Math.floor(b.x - 3), y - 3, totalW + 6, 25);
+            ctx.fillStyle = '#22c55e';
+            ctx.fillRect(Math.floor(b.x), y, totalW, 22);
+            ctx.fillStyle = '#86efac';
+            ctx.fillRect(Math.floor(b.x + 4), y + 4, totalW - 8, 6);
+        }
+
+        function drawBrickGround() {
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, GROUND_Y, LOGICAL_WIDTH, 4);
+
+            const tileW = 32;
+            const tileH = 30;
+            const startOffset = -Math.floor(groundScrollX);
+
+            for (let row = 0; row < 2; row++) {
+                const ry = GROUND_Y + 4 + row * tileH;
+                const rowShift = (row % 2) * (tileW / 2);
+
+                for (let x = startOffset - tileW; x < LOGICAL_WIDTH + tileW; x += tileW) {
+                    const bx = x + rowShift;
+                    ctx.fillStyle = '#c84c0c';
+                    ctx.fillRect(bx, ry, tileW, tileH);
+
+                    ctx.fillStyle = '#fca5a5';
+                    ctx.fillRect(bx, ry, tileW - 2, 4);
+                    ctx.fillRect(bx, ry, 4, tileH - 2);
+
+                    ctx.fillStyle = '#000000';
+                    ctx.fillRect(bx + tileW - 3, ry, 3, tileH);
+                    ctx.fillRect(bx, ry + tileH - 3, tileW, 3);
+                }
+            }
+        }
+
+        function drawWarpPipe(ob) {
+            const x = Math.floor(ob.x);
+            const y = Math.floor(ob.y);
+            const w = ob.width;
+            const h = ob.height;
+            const lipH = 22;
+
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(x + 4, y + lipH, w - 8, h - lipH);
+            ctx.fillStyle = '#16a34a';
+            ctx.fillRect(x + 7, y + lipH, w - 14, h - lipH);
+            ctx.fillStyle = '#86efac';
+            ctx.fillRect(x + 12, y + lipH, 7, h - lipH);
+            ctx.fillStyle = '#14532d';
+            ctx.fillRect(x + w - 15, y + lipH, 6, h - lipH);
+
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(x, y, w, lipH);
+            ctx.fillStyle = '#22c55e';
+            ctx.fillRect(x + 3, y + 3, w - 6, lipH - 6);
+            ctx.fillStyle = '#86efac';
+            ctx.fillRect(x + 9, y + 3, 8, lipH - 6);
+            ctx.fillStyle = '#14532d';
+            ctx.fillRect(x + w - 12, y + 3, 6, lipH - 6);
+        }
+
+        function drawSpinningCoin(c) {
+            const x = Math.floor(c.x);
+            const y = Math.floor(c.y);
+            const spinPhase = Math.floor((frameCount * 0.18 + c.phase) % 4);
+            const widths = [16, 10, 4, 10];
+            const w = widths[spinPhase];
+            const h = 20;
+
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(x - w / 2 - 2, y - h / 2 - 2, w + 4, h + 4);
+
+            ctx.fillStyle = '#facc15';
+            ctx.fillRect(x - w / 2, y - h / 2, w, h);
+
+            if (w >= 10) {
+                ctx.fillStyle = '#fef08a';
+                ctx.fillRect(x - w / 2 + 2, y - h / 2 + 2, 3, h - 4);
+                ctx.fillStyle = '#ca8a04';
+                ctx.fillRect(x - 1, y - 5, 3, 10);
+            }
+        }
+
+        function renderGame() {
+            ctx.save();
+
+            // Apply camera shake when the Giant Converse slams into the ground!
+            if (converseFoot.shakeIntensity > 0) {
+                const dx = (Math.random() - 0.5) * converseFoot.shakeIntensity * 2;
+                const dy = (Math.random() - 0.5) * converseFoot.shakeIntensity * 2;
+                ctx.translate(dx, dy);
+            }
+
+            // 1. Sky Background
+            ctx.fillStyle = '#5c94fc';
+            ctx.fillRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
+
+            // 2. Parallax Clouds, Hills, and Bushes
+            clouds.forEach(c => drawPixelCloud(Math.floor(c.x), Math.floor(c.y), c.size));
+            hills.forEach(h => drawPixelHill(h));
+            bushes.forEach(b => drawPixelBush(b));
+
+            // 3. Physical Floating Brick & Question Blocks
+            floatingBlocks.forEach(fb => {
+                const bx = Math.floor(fb.x);
+                const by = Math.floor(fb.y);
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(bx, by, fb.width, fb.height);
+
+                if (fb.isQuestion && !fb.isUsed) {
+                    // Glowing Gold '?' Block
+                    ctx.fillStyle = '#f59e0b';
+                    ctx.fillRect(bx + 3, by + 3, fb.width - 6, fb.height - 6);
+                    ctx.fillStyle = '#fef08a';
+                    ctx.fillRect(bx + 4, by + 4, fb.width - 8, 3);
+                    // Corner rivets
+                    ctx.fillStyle = '#78350f';
+                    ctx.fillRect(bx + 4, by + 4, 2, 2);
+                    ctx.fillRect(bx + fb.width - 6, by + 4, 2, 2);
+                    ctx.fillRect(bx + 4, by + fb.height - 6, 2, 2);
+                    ctx.fillRect(bx + fb.width - 6, by + fb.height - 6, 2, 2);
+                    ctx.fillStyle = '#fef08a';
+                    ctx.font = '14px "Press Start 2P"';
+                    ctx.fillText('?', bx + 9, by + 23);
+                } else if (fb.isUsed) {
+                    // Emptied brown/steel block after being bonked from below
+                    ctx.fillStyle = '#78716c';
+                    ctx.fillRect(bx + 3, by + 3, fb.width - 6, fb.height - 6);
+                    ctx.fillStyle = '#292524';
+                    ctx.fillRect(bx + 5, by + 5, 2, 2);
+                    ctx.fillRect(bx + fb.width - 7, by + 5, 2, 2);
+                    ctx.fillRect(bx + 5, by + fb.height - 7, 2, 2);
+                    ctx.fillRect(bx + fb.width - 7, by + fb.height - 7, 2, 2);
+                } else {
+                    // Classic Mario Brick Block with mortar lines
+                    ctx.fillStyle = '#c84c0c';
+                    ctx.fillRect(bx + 3, by + 3, fb.width - 6, fb.height - 6);
+                    ctx.fillStyle = '#fca5a5';
+                    ctx.fillRect(bx + 3, by + 3, fb.width - 6, 3);
+                    ctx.fillStyle = '#000000';
+                    ctx.fillRect(bx + 3, by + 15, fb.width - 6, 3);
+                    ctx.fillRect(bx + 15, by + 3, 3, 12);
+                    ctx.fillRect(bx + 9, by + 18, 3, 11);
+                    ctx.fillRect(bx + 21, by + 18, 3, 11);
+                }
+            });
+
+            // 4. Spinning Gold Coins
+            coins.forEach(c => drawSpinningCoin(c));
+
+            // 5. Obstacles (Pipes, Stompable Goombas, Spiny Shells)
+            obstacles.forEach(ob => {
+                if (ob.type === 'PIPE') {
+                    drawWarpPipe(ob);
+                } else if (ob.type === 'GOOMBA') {
+                    if (ob.squashed) {
+                        drawPixelMatrix(ctx, SPRITE_GOOMBA_SQUASHED, ob.x - 6, GROUND_Y - 15, 3);
+                    } else {
+                        const sprite = Math.floor(frameCount / 9) % 2 === 0 ? SPRITE_GOOMBA_1 : SPRITE_GOOMBA_2;
+                        drawPixelMatrix(ctx, sprite, ob.x, ob.y, 3);
+                    }
+                } else if (ob.type === 'SPINY') {
+                    drawPixelMatrix(ctx, SPRITE_SPINY, ob.x, ob.y, 3);
+                }
+            });
+
+            // 6. Ground Shadow underneath the descending Giant Converse
+            if (gameState === 'STOMP_WARNING' || gameState === 'STOMP_FALLING' || gameState === 'STOMP_IMPACT' || gameState === 'GAMEOVER') {
+                const progress = Math.max(0.2, Math.min(1, (converseFoot.bottomY + 60) / (GROUND_Y + 60)));
+                const shadowW = 230 * progress;
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.48)';
+                ctx.fillRect(
+                    Math.floor(converseFoot.x - shadowW / 2),
+                    GROUND_Y - 5,
+                    Math.floor(shadowW),
+                    10
+                );
+            }
+
+            // 7. Protagonist ("MINI GIFO" or "SUPER BAFFO")
+            const isGifo = currentSkin === 'minigifo';
+            if (gameState === 'STOMP_IMPACT' || gameState === 'GAMEOVER') {
+                const pancakeSprite = isGifo ? SPRITE_GIFO_PANCAKE : SPRITE_BAFFO_PANCAKE;
+                drawPixelMatrix(ctx, pancakeSprite, player.x - 9, GROUND_Y - 12, 3);
+            } else if (gameState === 'STOMP_WARNING' || gameState === 'STOMP_FALLING') {
+                const shockSprite = isGifo ? SPRITE_GIFO_SHOCK : SPRITE_BAFFO_SHOCK;
+                drawPixelMatrix(ctx, shockSprite, player.x, player.y, 3);
+            } else if (!player.isGrounded) {
+                const jumpSprite = isGifo ? SPRITE_GIFO_JUMP : SPRITE_BAFFO_JUMP;
+                drawPixelMatrix(ctx, jumpSprite, player.x, player.y, 3);
+            } else {
+                const run1 = isGifo ? SPRITE_GIFO_RUN1 : SPRITE_BAFFO_RUN1;
+                const run2 = isGifo ? SPRITE_GIFO_RUN2 : SPRITE_BAFFO_RUN2;
+                const runSprite = player.animFrame === 0 ? run1 : run2;
+                drawPixelMatrix(ctx, runSprite, player.x, player.y, 3);
+            }
+
+            // 8. Classic Brick Ground
+            drawBrickGround();
+
+            // 9. THE GIANT PIXELATED SHOE FROM THE SKY (ADIDAS CAMPUS GRIGIA DA DONNA OR CONVERSE CHUCK TAYLOR)!
+            if (gameState === 'STOMP_FALLING' || gameState === 'STOMP_IMPACT' || gameState === 'GAMEOVER') {
+                if (gameState === 'STOMP_FALLING') {
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+                    ctx.fillRect(converseFoot.x - 95, 0, 4, converseFoot.bottomY - 60);
+                    ctx.fillRect(converseFoot.x + 75, 0, 4, converseFoot.bottomY - 60);
+                }
+
+                drawGiantShoe(
+                    ctx,
+                    converseFoot.x,
+                    converseFoot.bottomY,
+                    converseColorMode
+                );
+            }
+
+            // 10. Shockwave Ring on Impact
+            if (converseFoot.shockwaveAlpha > 0) {
+                ctx.strokeStyle = `rgba(255, 255, 255, ${converseFoot.shockwaveAlpha})`;
+                ctx.lineWidth = 6;
+                ctx.beginPath();
+                ctx.ellipse(
+                    converseFoot.x,
+                    GROUND_Y,
+                    converseFoot.shockwaveRadius,
+                    converseFoot.shockwaveRadius * 0.25,
+                    0,
+                    0,
+                    Math.PI * 2
+                );
+                ctx.stroke();
+            }
+
+            // 11. Particles & Floating Score Popups
+            particles.forEach(pt => {
+                ctx.globalAlpha = Math.max(0, pt.alpha);
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(Math.floor(pt.x - 1), Math.floor(pt.y - 1), pt.size + 2, pt.size + 2);
+                ctx.fillStyle = pt.color;
+                ctx.fillRect(Math.floor(pt.x), Math.floor(pt.y), pt.size, pt.size);
+            });
+            ctx.globalAlpha = 1;
+
+            floatingTexts.forEach(ft => {
+                ctx.globalAlpha = Math.max(0, ft.alpha);
+                ctx.font = '12px "Press Start 2P"';
+                ctx.fillStyle = '#000000';
+                ctx.fillText(ft.text, Math.floor(ft.x + 2), Math.floor(ft.y + 2));
+                ctx.fillStyle = ft.color;
+                ctx.fillText(ft.text, Math.floor(ft.x), Math.floor(ft.y));
+            });
+            ctx.globalAlpha = 1;
+
+            ctx.restore();
+        }
+
+        function startGame() {
+            sound.init();
+            resetGame();
+            startOverlay.classList.add('hidden');
+            gameOverOverlay.classList.add('hidden');
+            gameState = 'PLAYING';
+            lastFrameTime = performance.now();
+        }
+
+        function showGameOverScreen() {
+            gameState = 'GAMEOVER';
+
+            let isNewRecord = false;
+            if (score >= highScore && score > 0) {
+                highScore = score;
+                isNewRecord = true;
+                try {
+                    localStorage.setItem('superMiniGifoHighScore', String(highScore));
+                } catch (e) {}
+            }
+
+            updateHUD();
+            finalScoreEl.textContent = String(score);
+            finalCoinsEl.textContent = String(coinsCollected);
+            finalGoombasEl.textContent = String(goombasStomped);
+            finalHighScoreEl.textContent = String(highScore);
+
+            if (isNewRecord) {
+                newRecordBadge.classList.remove('hidden');
+            } else {
+                newRecordBadge.classList.add('hidden');
+            }
+
+            gameOverOverlay.classList.remove('hidden');
+        }
+
+        // Keyboard Controls
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') {
+                e.preventDefault();
+                if (!e.repeat) {
+                    handleJumpStart();
+                }
+            } else if (e.code === 'Enter' && (gameState === 'START' || gameState === 'GAMEOVER')) {
+                e.preventDefault();
+                startGame();
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') {
+                handleJumpEnd();
+            }
+        });
+
+        // Canvas & External Button Pointer/Touch Controls
+        canvas.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            handleJumpStart();
+        });
+        window.addEventListener('pointerup', () => {
+            handleJumpEnd();
+        });
+
+        const jumpBtnExternal = document.getElementById('jumpBtnExternal');
+        jumpBtnExternal.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            handleJumpStart();
+        });
+
+        // Mobile Ergonomic Touch Deck Buttons (Left & Right Thumb Jump Controls)
+        const mobileLeftJumpBtn = document.getElementById('mobileLeftJumpBtn');
+        const mobileRightJumpBtn = document.getElementById('mobileRightJumpBtn');
+
+        [mobileLeftJumpBtn, mobileRightJumpBtn].forEach((btn) => {
+            btn.addEventListener('pointerdown', (e) => {
+                e.preventDefault();
+                btn.classList.add('pressed');
+                handleJumpStart();
+            });
+            btn.addEventListener('pointerup', (e) => {
+                e.preventDefault();
+                btn.classList.remove('pressed');
+                handleJumpEnd();
+            });
+            btn.addEventListener('pointercancel', () => {
+                btn.classList.remove('pressed');
+                handleJumpEnd();
+            });
+        });
+
+        document.getElementById('startBtn').addEventListener('click', startGame);
+        document.getElementById('restartBtn').addEventListener('click', startGame);
+
+        // Skin Selection Buttons & Cards
+        skinToggleBtn.addEventListener('click', () => {
+            selectSkin(currentSkin === 'minigifo' ? 'baffo' : 'minigifo');
+        });
+        cardMiniGifo.addEventListener('click', () => selectSkin('minigifo'));
+        cardSuperBaffo.addEventListener('click', () => selectSkin('baffo'));
+
+        // Difficulty Selector Top Button & Overlay Pills
+        difficultyTopBtn.addEventListener('click', () => {
+            selectDifficulty(currentDifficultyIndex + 1);
+        });
+
+        document.querySelectorAll('.diff-pill').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                const idx = parseInt(btn.getAttribute('data-diff'), 10);
+                selectDifficulty(idx);
+            });
+        });
+
+        // Mobile Mode Toggle Button
+        mobileModeBtn.addEventListener('click', () => {
+            setMobileMode(!isMobileMode);
+        });
+
+        // Giant Shoe Skin Selector Button (Cycles: Adidas Campus Grigia da donna -> Converse Nera -> Converse Rossa)
+        shoeColorBtn.addEventListener('click', () => {
+            currentShoeIndex = (currentShoeIndex + 1) % SHOE_SKINS.length;
+            const selectedShoe = SHOE_SKINS[currentShoeIndex];
+            converseColorMode = selectedShoe.key;
+            shoeColorLabel.textContent = selectedShoe.label;
+            if (gameState !== 'PLAYING') {
+                renderGame();
+            }
+        });
+
+        // Mute / Unmute 8-bit Sound
+        muteBtn.addEventListener('click', () => {
+            const isMuted = sound.toggleMute();
+            muteIcon.className = isMuted ? 'fa-solid fa-volume-xmark text-red-700' : 'fa-solid fa-volume-high';
+        });
+
+        // Delta-time Locked Animation Loop (keeps speed consistent across 60Hz/120Hz/144Hz screens)
+        function gameLoop(now) {
+            const elapsed = now - lastFrameTime;
+            lastFrameTime = now;
+            const dt = Math.min(2.2, Math.max(0.2, elapsed / 16.667));
+
+            updateGame(dt);
+            renderGame();
+            requestAnimationFrame(gameLoop);
+        }
+
+        window.onload = function () {
+            initScenery();
+            renderSkinPreviewCards();
+            selectSkin('minigifo');
+            selectDifficulty(0);
+
+            // Auto-detect mobile/touch devices to enable Mobile Mode automatically
+            const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (window.innerWidth < 820);
+            setMobileMode(isTouchDevice);
+
+            renderGame();
+            lastFrameTime = performance.now();
+            requestAnimationFrame(gameLoop);
+        };
+    </script>
+</body>
+</html>
